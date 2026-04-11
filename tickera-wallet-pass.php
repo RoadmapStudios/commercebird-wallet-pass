@@ -1,7 +1,7 @@
 <?php
 /*
  * Plugin Name: Tickera - Wallet Pass Add-on
- * Plugin URI: http://tickera.com/
+ * Plugin URI: https://tickera.com/
  * Description: Adds Apple & Android Wallet Pass for Tickera Event Plugin for WordPress.
  * Author: CommerceBird
  * Author URI:  https://commercebird.com
@@ -9,7 +9,7 @@
  * Requires Plugins: commercebird, woocommerce, tickera
  * Version: 1.0.0
  * License: GNU General Public License v3.0
- * License URI: http://www.gnu.org/licenses/gpl-3.0.html
+ * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  */
 
 require __DIR__ . '/vendor/autoload.php';
