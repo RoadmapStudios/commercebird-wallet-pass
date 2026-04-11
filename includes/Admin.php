@@ -123,6 +123,10 @@ final class Admin
 
     private static function saveSettings(): ?array
     {
+        if (!\current_user_can('manage_options')) {
+            return null;
+        }
+
         if (
             !isset($_POST['save_apple_wallet_settings_nonce'])
             || !\wp_verify_nonce(\sanitize_text_field(\wp_unslash($_POST['save_apple_wallet_settings_nonce'])), 'save_apple_wallet_settings')
@@ -134,46 +138,20 @@ final class Admin
             return self::getSettings();
         }
 
-        $uploads = \wp_upload_dir();
         $posted = \wp_unslash($_POST['tc_apple_wallet']);
 
         $settings = [
-            'qr_code_type' => \sanitize_text_field((string) ($posted['qr_code_type'] ?? 'PKBarcodeFormatQR')),
-            'logo_text' => \sanitize_text_field((string) ($posted['logo_text'] ?? '')),
+            'qr_code_type'     => \sanitize_text_field((string) ($posted['qr_code_type'] ?? 'PKBarcodeFormatQR')),
+            'logo_text'        => \sanitize_text_field((string) ($posted['logo_text'] ?? '')),
             'background_color' => \sanitize_text_field((string) ($posted['background_color'] ?? '#aaaaaa')),
             'organisation_name' => \sanitize_text_field((string) ($posted['organisation_name'] ?? '')),
-            'icon_file' => isset($_POST['icon_file']) ? \esc_url_raw((string) \wp_unslash($_POST['icon_file'])) : '',
-            'icon_file_id' => isset($_POST['icon_file_id']) ? \absint($_POST['icon_file_id']) : 0,
+            'icon_file'        => isset($_POST['icon_file']) ? \esc_url_raw((string) \wp_unslash($_POST['icon_file'])) : '',
+            'icon_file_id'     => isset($_POST['icon_file_id']) ? \absint($_POST['icon_file_id']) : 0,
         ];
-
-        $settings['icon_file_abs_path'] = self::mapUploadUrlToPath($settings['icon_file'], $uploads);
 
         \update_option(self::OPTION_KEY, $settings);
 
         return self::getSettings();
-    }
-
-    private static function mapUploadUrlToPath(string $url, array $uploads): string
-    {
-        if ($url === '') {
-            return '';
-        }
-
-        $baseUrl = (string) ($uploads['baseurl'] ?? '');
-        $baseDir = (string) ($uploads['basedir'] ?? '');
-
-        if ($baseUrl !== '' && $baseDir !== '' && str_starts_with($url, $baseUrl)) {
-            return $baseDir . substr($url, strlen($baseUrl));
-        }
-
-        if (strpos($url, 'uploads/') !== false && $baseDir !== '') {
-            $parts = explode('uploads/', $url, 2);
-            if (!empty($parts[1])) {
-                return rtrim($baseDir, '/\\') . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $parts[1]);
-            }
-        }
-
-        return '';
     }
 
     public static function getSettings(): array
@@ -185,11 +163,10 @@ final class Admin
 
         return array_merge(
             [
-                'qr_code_type' => 'PKBarcodeFormatQR',
-                'icon_file' => '',
-                'icon_file_id' => 0,
-                'icon_file_abs_path' => '',
-                'logo_text' => '',
+                'qr_code_type'     => 'PKBarcodeFormatQR',
+                'icon_file'        => '',
+                'icon_file_id'     => 0,
+                'logo_text'        => '',
                 'background_color' => '#aaaaaa',
                 'organisation_name' => '',
             ],

@@ -28,8 +28,17 @@ final class Api
         return $fields;
     }
 
+    public const PASS_URL_META_KEY = '_tc_wallet_pass_url';
+
     public static function renderWalletPassForTicket($fieldName, $postFieldType, $ticketsId): void
     {
+        // Serve from cache if available — avoids hitting the Node API on every page load.
+        $cached = get_post_meta((int) $ticketsId, self::PASS_URL_META_KEY, true);
+        if (!empty($cached) && is_string($cached)) {
+            self::renderWalletButton($cached);
+            return;
+        }
+
         $events = get_post_meta($ticketsId, '', false);
 
         $eventId = $events['event_id'][0] ?? null;
@@ -57,7 +66,20 @@ final class Api
             (string) $lastName
         );
 
+        if (!empty($passUrl)) {
+            update_post_meta((int) $ticketsId, self::PASS_URL_META_KEY, $passUrl);
+        }
+
         self::renderWalletButton($passUrl);
+    }
+
+    /**
+     * Deletes the cached pass URL for a single ticket so that it is
+     * regenerated the next time the customer views their orders page.
+     */
+    public static function invalidatePassCache(int $ticketId): void
+    {
+        delete_post_meta($ticketId, self::PASS_URL_META_KEY);
     }
 
     public static function appleWalletPass(
@@ -129,7 +151,7 @@ final class Api
         $android = isset($_SERVER['HTTP_USER_AGENT']) ? stripos((string) $_SERVER['HTTP_USER_AGENT'], 'Android') : false;
 
         if ($android !== false) {
-            echo '<a href="https://walletpass.io?u=' . rawurlencode($passUrl) . '" target="_system" rel="noopener noreferrer"><img src="https://www.walletpasses.io/badges/badge_web_generic_en@2x.png" alt="Wallet Pass" /></a>';
+            echo '<a href="https://www.walletpasses.io?u=' . rawurlencode($passUrl) . '" target="_system" rel="noopener noreferrer"><img src="https://www.walletpasses.io/badges/badge_web_generic_en@2x.png" alt="Wallet Pass" /></a>';
             return;
         }
 

@@ -3,7 +3,7 @@
         'name' => 'tickera/walletpass',
         'pretty_version' => 'dev-master',
         'version' => 'dev-master',
-        'reference' => 'a19f2145763d52e440b19c924d76f92361f6f16e',
+        'reference' => '818f21098b4c41dac3ec7f05a217ba0aae66fc78',
         'type' => 'wordpress-plugin',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -31,7 +31,7 @@
         'tickera/walletpass' => array(
             'pretty_version' => 'dev-master',
             'version' => 'dev-master',
-            'reference' => 'a19f2145763d52e440b19c924d76f92361f6f16e',
+            'reference' => '818f21098b4c41dac3ec7f05a217ba0aae66fc78',
             'type' => 'wordpress-plugin',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

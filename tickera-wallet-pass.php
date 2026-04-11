@@ -63,3 +63,5 @@ if (!function_exists('setAppleMimeType')) {
 }
 
 register_activation_hook(__FILE__, 'setAppleMimeType');
+register_activation_hook(__FILE__, [Plugin::class, 'scheduleCleanup']);
+register_deactivation_hook(__FILE__, [Plugin::class, 'clearCleanupSchedule']);
