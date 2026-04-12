@@ -10,6 +10,18 @@ wp-content/uploads/
 wp-content/mu-plugins/
 wp-content/wp-cache-config.php
 wp-content/plugins/hello.php
+vendor/*
+
+# Allow composer subfolder and autoload.php
+!vendor/composer/
+!vendor/composer/*
+!vendor/autoload.php
+!vendor/phpstan/
+
+# PHPStan files
+phpstan.neon
+phpstan-baseline.neon
+.phpstan-cache/
 
 /.htaccess
 /license.txt
