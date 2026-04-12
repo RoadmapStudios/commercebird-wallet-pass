@@ -1,0 +1,17 @@
+# Minimal PHPStan configuration for GitHub Actions - no bootstrap files
+parameters:
+    level: 0
+    paths:
+        - includes/classes/
+        - admin/includes/
+    
+    # Exclude problematic paths and files that require WooCommerce/WordPress classes
+    excludePaths:
+        - admin/assets/
+        - vendor/
+        - svn-tags/
+        - build/
+        - commercebird/
+        - includes/classes/apis/class-commercebird-*.php
+        - includes/classes/purchase-orders/class-cmbird-purchase-order-email.php
+        - includes/classes/purchase-orders/class-cmbird-rest-shop-purchase-controller.php

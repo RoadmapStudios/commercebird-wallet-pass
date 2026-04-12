@@ -1,0 +1,17 @@
+# Local PHPStan configuration - copy from phpstan.neon.dist and customize as needed
+# This file is ignored by git and can contain local-specific settings
+
+includes:
+    - phpstan.neon.dist
+
+parameters:
+    # You can override the level here for stricter analysis
+    # level: 7
+    
+    # Add additional paths if needed
+    # paths:
+    #     - custom-addon/
+    
+    # Local-specific ignores can go here
+    # ignoreErrors:
+    #     - '#^Your specific local ignore pattern#'
