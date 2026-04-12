@@ -18,4 +18,4 @@ wp-content/plugins/hello.php
 /sitemap.xml.gz
 build-mac.sh
 build-zip/
-
+commercebird-*.zip
