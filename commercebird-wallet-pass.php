@@ -1,8 +1,8 @@
 <?php
 /*
- * Plugin Name: Tickera - Wallet Pass Add-on
+ * Plugin Name: CommerceBird - Wallet Pass for Tickera
  * Plugin URI: https://tickera.com/
- * Description: Adds Apple & Android Wallet Pass for Tickera Event Plugin for WordPress.
+ * Description: Adds Apple & Android Wallet Pass for Tickera Event Plugin for WordPress / WooCommerce.
  * Author: CommerceBird
  * Author URI:  https://commercebird.com
  * Requires PHP: 8.2

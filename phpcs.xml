@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+<ruleset name="CommerceBird Coding Standards">
+	<description>Custom coding standards for CommerceBird plugin</description>
+
+	<!-- Show progress and sniff codes -->
+	<arg value="ps"/>
+
+	<!-- Strip the filepaths down to the relevant bit -->
+	<arg name="basepath" value="./"/>
+
+	<!-- Check up to 8 files simultaneously -->
+	<arg name="parallel" value="8"/>
+
+	<!-- Only check PHP files -->
+	<arg name="extensions" value="php"/>
+
+	<!-- Check all files in this directory and the directories below it -->
+	<file>.</file>
+
+	<!-- Exclude the build directories and vendor -->
+	<exclude-pattern>*/build/*</exclude-pattern>
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+	<exclude-pattern>*/node_modules/*</exclude-pattern>
+	<exclude-pattern>*.min.js</exclude-pattern>
+	<exclude-pattern>*.min.css</exclude-pattern>
+	<exclude-pattern>*/stubs/*</exclude-pattern>
+
+	<!-- Include the WordPress-Extra standard -->
+	<rule ref="WordPress-Extra">
+		<!-- Allow short array syntax -->
+		<exclude name="Generic.Arrays.DisallowShortArraySyntax"/>
+	</rule>
+
+	<!-- Exclude filename rules for utility scripts -->
+	<rule ref="WordPress.Files.FileName">
+		<exclude-pattern>fix-*.php</exclude-pattern>
+	</rule>
+
+	<!-- Include the WordPress-Docs standard -->
+	<rule ref="WordPress-Docs"/>
+
+	<!-- Add in some extra rules from other standards -->
+	<rule ref="Generic.CodeAnalysis.UnusedFunctionParameter"/>
+	<rule ref="Generic.Commenting.Todo"/>
+
+	<!-- Check for PHP cross-version compatibility -->
+	<config name="testVersion" value="7.4-"/>
+	
+	<!-- Enforce Yoda conditions -->
+	<rule ref="WordPress.PHP.YodaConditions"/>
+	
+	<!-- Enforce proper spacing -->
+	<rule ref="WordPress.WhiteSpace.OperatorSpacing"/>
+	<rule ref="WordPress.Arrays.ArrayDeclarationSpacing"/>
+	<rule ref="WordPress.Arrays.ArrayKeySpacingRestrictions"/>
+	
+	<!-- Enforce proper indentation -->
+	<rule ref="Generic.WhiteSpace.ScopeIndent">
+		<properties>
+			<property name="indent" value="4"/>
+			<property name="tabIndent" value="true"/>
+		</properties>
+	</rule>
+
+	<!-- Minimum supported version -->
+	<config name="minimum_supported_wp_version" value="6.5"/>
+</ruleset>

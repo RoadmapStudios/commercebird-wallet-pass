@@ -1,0 +1,58 @@
+# PHPStan configuration for Tickera Apple Wallet WordPress Plugin
+# The szepeviktor/phpstan-wordpress extension is automatically loaded via phpstan/extension-installer
+
+parameters:
+    level: 1
+    paths:
+        - includes/
+    
+    # Bootstrap files that define WordPress and WooCommerce functions
+    bootstrapFiles:
+        - vendor/php-stubs/wordpress-stubs/wordpress-stubs.php
+        - vendor/php-stubs/woocommerce-stubs/woocommerce-stubs.php
+    
+    # Exclude problematic paths
+    excludePaths:
+        - vendor/
+        - build/
+    
+    # Ignore common WordPress patterns that PHPStan doesn't understand
+    ignoreErrors:
+        # WordPress globals are dynamically defined
+        - '#^Variable \$wpdb might not be defined\.$#'
+        - '#^Variable \$wp_query might not be defined\.$#'
+        - '#^Variable \$post might not be defined\.$#'
+        
+        # WordPress hook callbacks often have unused or undeclared parameters
+        - '#^Function .* has parameter \$[a-zA-Z_]+ with no type specified\.$#'
+        
+        # WordPress action/filter functions that may not be found
+        - '#^Function (apply_filters|do_action|add_filter|add_action|remove_filter|remove_action|do_action_ref_array|apply_filters_ref_array)\(\) not found\.$#'
+        
+        # WordPress admin functions
+        - '#^Function (is_admin|current_user_can|get_current_user_id)\(\) not found\.$#'
+        
+        # WordPress post functions
+        - '#^Function (get_post|get_post_meta|update_post_meta|delete_post_meta|wp_insert_post)\(\) not found\.$#'
+        
+        # WordPress option functions
+        - '#^Function (get_option|update_option|delete_option|add_option)\(\) not found\.$#'
+        
+        # WordPress plugin functions
+        - '#^Function (plugin_dir_path|plugin_dir_url|register_activation_hook|register_deactivation_hook)\(\) not found\.$#'
+        
+        # WordPress admin menu functions
+        - '#^Function (add_menu_page|add_submenu_page|wp_die)\(\) not found\.$#'
+        
+        # WordPress escaping and validation functions
+        - '#^Function (wp_nonce_field|wp_verify_nonce|sanitize_.*|esc_.*)\(\) not found\.$#'
+        
+        # WooCommerce functions
+        - '#^Function (wc_get_order|wc_get_product|WC|woocommerce_get_template)\(\) not found\.$#'
+        
+        # WooCommerce hooks with unused parameters
+        - message: '#^.*has parameter.*with no type specified\.$#'
+          path: includes/*
+    
+    # Report unused variables and parameters
+    reportUnmatchedIgnoredErrors: false
