@@ -27,6 +27,7 @@ phpstan.neon.dist
 phpstan-ci.neon.dist
 phpstan-minimal.neon.dist
 stubs/
+vendor/
 
 bin/
 svn-tags/
