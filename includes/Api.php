@@ -30,18 +30,18 @@ final class Api {
 
 	public const PASS_URL_META_KEY = '_tc_wallet_pass_url';
 
-	public static function renderWalletPassForTicket( $field_name, $post_field_type, $tickets_id ): void {
-		self::renderWalletButton( self::getOrGeneratePassUrl( (int) $tickets_id ) );
+	public static function renderWalletPassForTicket( int $order_attendee_id ): void {
+		self::renderWalletButton( self::getOrGeneratePassUrl( $order_attendee_id ) );
 	}
 
-	private static function getOrGeneratePassUrl( int $ticket_id ): ?string {
+	private static function getOrGeneratePassUrl( int $order_attendee_id ): ?string {
 		// Serve from cache if available — avoids hitting the Node API on every page load.
-		$cached = get_post_meta( $ticket_id, self::PASS_URL_META_KEY, true );
+		$cached = get_post_meta( $order_attendee_id, self::PASS_URL_META_KEY, true );
 		if ( ! empty( $cached ) && is_string( $cached ) ) {
 			return $cached;
 		}
 
-		$events = get_post_meta( $ticket_id, '', false );
+		$events = get_post_meta( $order_attendee_id, '', false );
 
 		$event_id    = $events['event_id'][0] ?? null;
 		$ticket_code = $events['ticket_code'][0] ?? '';
@@ -54,44 +54,24 @@ final class Api {
 
 		$event_obj    = new \TC_Event( $event_id );
 		$location_obj = get_post_meta( (int) $event_id, '', false );
-		$ticket       = new \TC_Ticket( $ticket_id );
+		$ticket       = new \TC_Ticket( $order_attendee_id );
 
 		$pass_url = self::appleWalletPass(
 			(string) ( $event_obj->details->post_title ?? '' ),
 			(string) ( $location_obj['event_location'][0] ?? '' ),
 			(string) ( $location_obj['event_date_time'][0] ?? '' ),
 			(string) ( $ticket->details->post_title ?? '' ),
-			$ticket_id,
+			$order_attendee_id,
 			(string) $ticket_code,
 			(string) $first_name,
 			(string) $last_name
 		);
 
 		if ( ! empty( $pass_url ) ) {
-			update_post_meta( $ticket_id, self::PASS_URL_META_KEY, $pass_url );
+			update_post_meta( $order_attendee_id, self::PASS_URL_META_KEY, $pass_url );
 		}
 
 		return $pass_url;
-	}
-
-	/**
-	 * Returns the WP post IDs of all ticket instances belonging to a given order.
-	 * Ticket codes are stored in postmeta as "{order_id}-{sequence}" (e.g. "12345-1"),
-	 * so we match with a LIKE prefix rather than an exact meta_value comparison.
-	 *
-	 * @return int[]
-	 */
-	private static function getTicketIdsByOrder( int $order_id ): array {
-		global $wpdb;
-
-		$rows = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = 'ticket_code' AND meta_value LIKE %s",
-				$wpdb->esc_like( $order_id . '-' ) . '%'
-			)
-		);
-
-		return array_map( 'intval', (array) $rows );
 	}
 
 	public static function addEmailWalletPass( \WC_Order $order, bool $sent_to_admin, bool $plain_text, \WC_Email $email ): void {
@@ -103,18 +83,25 @@ final class Api {
 			return;
 		}
 
-		$ticket_ids = self::getTicketIdsByOrder( $order->get_id() );
+		$order_attendees = \Tickera\TC_Orders::get_tickets_ids( $order->get_id() );
 
-		if ( empty( $ticket_ids ) ) {
+		if ( empty( $order_attendees ) ) {
 			return;
 		}
 
 		$passes = array();
-		foreach ( $ticket_ids as $ticket_id ) {
-			$pass_url = self::getOrGeneratePassUrl( (int) $ticket_id );
+		foreach ( $order_attendees as $order_attendee_id ) {
+			$ticket_meta = get_post_meta( $order_attendee_id );
+			$ticket_code = isset( $ticket_meta['ticket_code'] ) ? reset( $ticket_meta['ticket_code'] ) : '';
+			if ( '' === $ticket_code ) {
+				continue;
+			}
+			$pass_url         = self::getOrGeneratePassUrl( (int) $order_attendee_id );
+			$ticket_type_id   = isset( $ticket_meta['ticket_type_id'] ) ? reset( $ticket_meta['ticket_type_id'] ) : '';
+			$ticket_type_name = get_the_title( $ticket_type_id );
 			if ( ! empty( $pass_url ) ) {
 				$passes[] = array(
-					'title' => get_the_title( $ticket_id ),
+					'title' => $ticket_type_name,
 					'url'   => $pass_url,
 				);
 			}
@@ -143,18 +130,25 @@ final class Api {
 	}
 
 	public static function addThankyouWalletPass( int $order_id ): void {
-		$ticket_ids = self::getTicketIdsByOrder( $order_id );
+		$order_attendees = \Tickera\TC_Orders::get_tickets_ids( $order_id );
 
-		if ( empty( $ticket_ids ) ) {
+		if ( empty( $order_attendees ) ) {
 			return;
 		}
 
 		$passes = array();
-		foreach ( $ticket_ids as $ticket_id ) {
-			$pass_url = self::getOrGeneratePassUrl( (int) $ticket_id );
+		foreach ( $order_attendees as $order_attendee_id ) {
+			$ticket_meta = get_post_meta( $order_attendee_id );
+			$ticket_code = isset( $ticket_meta['ticket_code'] ) ? reset( $ticket_meta['ticket_code'] ) : '';
+			if ( '' === $ticket_code ) {
+				continue;
+			}
+			$pass_url         = self::getOrGeneratePassUrl( (int) $order_attendee_id );
+			$ticket_type_id   = isset( $ticket_meta['ticket_type_id'] ) ? reset( $ticket_meta['ticket_type_id'] ) : '';
+			$ticket_type_name = get_the_title( $ticket_type_id );
 			if ( ! empty( $pass_url ) ) {
 				$passes[] = array(
-					'title' => get_the_title( $ticket_id ),
+					'title' => $ticket_type_name,
 					'url'   => $pass_url,
 				);
 			}
@@ -212,6 +206,11 @@ final class Api {
 		);
 
 		if ( ! class_exists( 'CommerceBird\\Admin\\Connectors\\Connector' ) ) {
+			// log the error for debugging purposes.
+			if ( class_exists( 'WC_Logger' ) ) {
+				$logger = wc_get_logger();
+				$logger->error( 'Connector class not found. Ensure the CommerceBird plugin is active.', array( 'source' => 'tickera-wallet-pass' ) );
+			}
 			return null;
 		}
 
@@ -233,7 +232,6 @@ final class Api {
 		}
 
 		if ( ! is_array( $response ) ) {
-			// Save the error via WC Logger for debugging purposes.
 			if ( class_exists( 'WC_Logger' ) ) {
 				$logger = wc_get_logger();
 				$logger->error( 'Wallet Pass API response is not an array.', array( 'source' => 'tickera-wallet-pass' ) );
@@ -241,13 +239,16 @@ final class Api {
 			return null;
 		}
 
-		$decoded = $response['data'] ?? $response;
-
-		if ( ! is_array( $decoded ) ) {
+		if ( ( $response['code'] ?? null ) !== 200 ) {
+			if ( class_exists( 'WC_Logger' ) ) {
+				$logger = wc_get_logger();
+				$logger->error( 'Wallet Pass API returned non-200: ' . ( $response['message'] ?? 'unknown error' ), array( 'source' => 'tickera-wallet-pass' ) );
+			}
 			return null;
 		}
 
-		$pass_url = $decoded['pass_url'] ?? $decoded['url'] ?? null;
+		$data     = $response['data'] ?? array();
+		$pass_url = $data['pass_url'] ?? $data['url'] ?? null;
 
 		if ( ! is_string( $pass_url ) || '' === $pass_url ) {
 			return null;
