@@ -11,6 +11,7 @@ final class Api {
 	public static function register(): void {
 		add_filter( 'tc_owner_info_orders_table_fields_front', array( self::class, 'addWalletColumn' ) );
 		add_action( 'woocommerce_email_after_order_table', array( self::class, 'addEmailWalletPass' ), 10, 4 );
+		add_action( 'woocommerce_thankyou', array( self::class, 'addThankyouWalletPass' ), 10, 1 );
 	}
 
 	public static function addWalletColumn( array $fields ): array {
@@ -73,6 +74,26 @@ final class Api {
 		return $pass_url;
 	}
 
+	/**
+	 * Returns the WP post IDs of all ticket instances belonging to a given order.
+	 * Ticket codes are stored in postmeta as "{order_id}-{sequence}" (e.g. "12345-1"),
+	 * so we match with a LIKE prefix rather than an exact meta_value comparison.
+	 *
+	 * @return int[]
+	 */
+	private static function getTicketIdsByOrder( int $order_id ): array {
+		global $wpdb;
+
+		$rows = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = 'ticket_code' AND meta_value LIKE %s",
+				$wpdb->esc_like( $order_id . '-' ) . '%'
+			)
+		);
+
+		return array_map( 'intval', (array) $rows );
+	}
+
 	public static function addEmailWalletPass( \WC_Order $order, bool $sent_to_admin, bool $plain_text, \WC_Email $email ): void {
 		if ( $sent_to_admin ) {
 			return;
@@ -82,19 +103,7 @@ final class Api {
 			return;
 		}
 
-		$ticket_ids = get_posts(
-			array(
-				'post_type'      => 'any',
-				'posts_per_page' => -1,
-				'fields'         => 'ids',
-				'meta_query'     => array(
-					array(
-						'key'   => 'order_id',
-						'value' => $order->get_id(),
-					),
-				),
-			)
-		);
+		$ticket_ids = self::getTicketIdsByOrder( $order->get_id() );
 
 		if ( empty( $ticket_ids ) ) {
 			return;
@@ -131,6 +140,38 @@ final class Api {
 			echo '<a href="' . esc_url( $pass['url'] ) . '"><img src="' . esc_url( $apple_badge ) . '" width="100" alt="' . esc_attr__( 'Add to Apple Wallet', 'tcawp' ) . '" style="display:block;margin-top:8px;" /></a>';
 			echo '</p>';
 		}
+	}
+
+	public static function addThankyouWalletPass( int $order_id ): void {
+		$ticket_ids = self::getTicketIdsByOrder( $order_id );
+
+		if ( empty( $ticket_ids ) ) {
+			return;
+		}
+
+		$passes = array();
+		foreach ( $ticket_ids as $ticket_id ) {
+			$pass_url = self::getOrGeneratePassUrl( (int) $ticket_id );
+			if ( ! empty( $pass_url ) ) {
+				$passes[] = array(
+					'title' => get_the_title( $ticket_id ),
+					'url'   => $pass_url,
+				);
+			}
+		}
+
+		if ( empty( $passes ) ) {
+			return;
+		}
+
+		echo '<section class="woocommerce-order-wallet-passes">';
+		echo '<h2>' . esc_html__( 'Your Wallet Passes', 'tcawp' ) . '</h2>';
+		foreach ( $passes as $pass ) {
+			echo '<p><strong>' . esc_html( $pass['title'] ) . '</strong><br>';
+			self::renderWalletButton( $pass['url'] );
+			echo '</p>';
+		}
+		echo '</section>';
 	}
 
 	/**
@@ -176,12 +217,27 @@ final class Api {
 
 		$connector = new \CommerceBird\Admin\Connectors\Connector();
 		$response  = $connector->request( $endpoint, 'POST', $payload );
+		// Log the response for debugging purposes.
+		if ( class_exists( 'WC_Logger' ) ) {
+			$logger = wc_get_logger();
+			$logger->info( 'Wallet Pass API response: ' . print_r( $response, true ), array( 'source' => 'tickera-wallet-pass' ) );
+		}
 
 		if ( is_wp_error( $response ) ) {
+			// Save the error via WC Logger for debugging purposes.
+			if ( class_exists( 'WC_Logger' ) ) {
+				$logger = wc_get_logger();
+				$logger->error( 'Wallet Pass API request failed: ' . $response->get_error_message(), array( 'source' => 'tickera-wallet-pass' ) );
+			}
 			return null;
 		}
 
 		if ( ! is_array( $response ) ) {
+			// Save the error via WC Logger for debugging purposes.
+			if ( class_exists( 'WC_Logger' ) ) {
+				$logger = wc_get_logger();
+				$logger->error( 'Wallet Pass API response is not an array.', array( 'source' => 'tickera-wallet-pass' ) );
+			}
 			return null;
 		}
 
@@ -193,7 +249,7 @@ final class Api {
 
 		$pass_url = $decoded['pass_url'] ?? $decoded['url'] ?? null;
 
-		if ( ! is_string( $pass_url ) || $pass_url === '' ) {
+		if ( ! is_string( $pass_url ) || '' === $pass_url ) {
 			return null;
 		}
 

@@ -21,25 +21,6 @@ if ( class_exists( Plugin::class ) ) {
 	Plugin::bootstrap();
 }
 
-if ( ! function_exists( 'appleWalletPass' ) ) {
-	function appleWalletPass( $event_title, $location, $datetime, $ticket_title, $ticket_id, $ticket_code, $first_name, $last_name ) {
-		if ( ! class_exists( Api::class ) ) {
-			return null;
-		}
-
-		return Api::appleWalletPass(
-			(string) $event_title,
-			(string) $location,
-			(string) $datetime,
-			(string) $ticket_title,
-			(int) $ticket_id,
-			(string) $ticket_code,
-			(string) $first_name,
-			(string) $last_name
-		);
-	}
-}
-
 if ( ! function_exists( 'tc_get_wallet_pass_for_ticket' ) ) {
 	function tc_get_wallet_pass_for_ticket( $field_name, $post_field_type, $tickets_id ) {
 		if ( ! class_exists( Api::class ) ) {
