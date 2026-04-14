@@ -47,7 +47,7 @@ final class Plugin {
 	 */
 	public static function cleanupExpiredPasses(): void {
 		// Fetch all ticket posts that have a cached pass URL.
-		$ticketIds = \get_posts(
+		$ticket_ids = \get_posts(
 			array(
 				'post_type'      => 'any',
 				'posts_per_page' => -1,
@@ -61,63 +61,63 @@ final class Plugin {
 			)
 		);
 
-		if ( empty( $ticketIds ) ) {
+		if ( empty( $ticket_ids ) ) {
 			return;
 		}
 
 		$now = \current_time( 'timestamp' );
 
-		foreach ( $ticketIds as $ticketId ) {
-			$eventId = \get_post_meta( (int) $ticketId, 'event_id', true );
+		foreach ( $ticket_ids as $ticket_id ) {
+			$event_id = \get_post_meta( (int) $ticket_id, 'event_id', true );
 
-			$shouldDelete = false;
+			$should_delete = false;
 
-			if ( empty( $eventId ) ) {
+			if ( empty( $event_id ) ) {
 				// Ticket has no linked event — clean up.
-				$shouldDelete = true;
+				$should_delete = true;
 			} else {
-				$event = \get_post( (int) $eventId );
+				$event = \get_post( (int) $event_id );
 
 				if ( ! $event || $event->post_status === 'trash' ) {
 					// Event deleted or trashed.
-					$shouldDelete = true;
+					$should_delete = true;
 				} else {
 					// Check whether the event date has passed.
-					$eventDatetime = \get_post_meta( (int) $eventId, 'event_date_time', true );
-					if ( ! empty( $eventDatetime ) ) {
-						$eventTimestamp = \strtotime( (string) $eventDatetime );
-						if ( $eventTimestamp !== false && $eventTimestamp < $now ) {
-							$shouldDelete = true;
+					$event_datetime = \get_post_meta( (int) $event_id, 'event_date_time', true );
+					if ( ! empty( $event_datetime ) ) {
+						$event_timestamp = \strtotime( (string) $event_datetime );
+						if ( $event_timestamp !== false && $event_timestamp < $now ) {
+							$should_delete = true;
 						}
 					}
 				}
 			}
 
-			if ( ! $shouldDelete ) {
+			if ( ! $should_delete ) {
 				continue;
 			}
 
 			// Delete the .pkpass attachment from the media library.
-			$passUrl = \get_post_meta( (int) $ticketId, Api::PASS_URL_META_KEY, true );
-			if ( ! empty( $passUrl ) && is_string( $passUrl ) ) {
-				$attachmentId = \attachment_url_to_postid( $passUrl );
-				if ( $attachmentId > 0 ) {
-					\wp_delete_attachment( $attachmentId, true );
+			$pass_url = \get_post_meta( (int) $ticket_id, Api::PASS_URL_META_KEY, true );
+			if ( ! empty( $pass_url ) && is_string( $pass_url ) ) {
+				$attachment_id = \attachment_url_to_postid( $pass_url );
+				if ( $attachment_id > 0 ) {
+					\wp_delete_attachment( $attachment_id, true );
 				}
 			}
 
 			// Remove the cached meta so the next view regenerates if needed.
-			\delete_post_meta( (int) $ticketId, Api::PASS_URL_META_KEY );
+			\delete_post_meta( (int) $ticket_id, Api::PASS_URL_META_KEY );
 		}
 	}
 
-	public static function onEventSaved( int $eventId ): void {
+	public static function onEventSaved( int $event_id ): void {
 		// Skip autosaves and revisions.
-		if ( \wp_is_post_autosave( $eventId ) || \wp_is_post_revision( $eventId ) ) {
+		if ( \wp_is_post_autosave( $event_id ) || \wp_is_post_revision( $event_id ) ) {
 			return;
 		}
 
-		$ticketIds = \get_posts(
+		$ticket_ids = \get_posts(
 			array(
 				'post_type'      => 'any',
 				'posts_per_page' => -1,
@@ -125,14 +125,14 @@ final class Plugin {
 				'meta_query'     => array(
 					array(
 						'key'   => 'event_id',
-						'value' => $eventId,
+						'value' => $event_id,
 					),
 				),
 			)
 		);
 
-		foreach ( $ticketIds as $ticketId ) {
-			Api::invalidatePassCache( (int) $ticketId );
+		foreach ( $ticket_ids as $ticket_id ) {
+			Api::invalidatePassCache( (int) $ticket_id );
 		}
 	}
 
