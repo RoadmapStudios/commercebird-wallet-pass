@@ -15,25 +15,10 @@
 
 require __DIR__ . '/vendor/autoload.php';
 
-use Tickera\WalletPass\Api;
 use Tickera\WalletPass\Plugin;
 
 if ( class_exists( Plugin::class ) ) {
 	Plugin::bootstrap();
-}
-
-if ( ! function_exists( 'tc_get_wallet_pass_for_ticket' ) ) {
-	function tc_get_wallet_pass_for_ticket( $order_id ) {
-		if ( ! class_exists( Api::class ) || ! class_exists( '\Tickera\TC_Orders' ) ) {
-			echo esc_html__( 'Wallet pass unavailable.', 'tcawp' );
-			return;
-		}
-
-		$order_attendees = \Tickera\TC_Orders::get_tickets_ids( (int) $order_id );
-		foreach ( (array) $order_attendees as $order_attendee_id ) {
-			Api::renderWalletPassForTicket( (int) $order_attendee_id );
-		}
-	}
 }
 
 if ( ! function_exists( 'setAppleMimeType' ) ) {

@@ -7,11 +7,14 @@ namespace Tickera\WalletPass;
 final class Api {
 
 	private const CONNECTOR_ENDPOINT = 'customs/wallet/pass';
+	private const PROXY_ACTION       = 'tcawp_wallet_pass';
 
 	public static function register(): void {
 		add_filter( 'tc_owner_info_orders_table_fields_front', array( self::class, 'addWalletColumn' ) );
+		add_action( 'woocommerce_thankyou', array( self::class, 'tc_get_wallet_pass_for_ticket' ) );
 		add_action( 'woocommerce_email_after_order_table', array( self::class, 'addEmailWalletPass' ), 10, 4 );
-		add_action( 'woocommerce_thankyou', array( self::class, 'addThankyouWalletPass' ), 10, 1 );
+		add_action( 'admin_post_' . self::PROXY_ACTION, array( self::class, 'serveWalletPassProxy' ) );
+		add_action( 'admin_post_nopriv_' . self::PROXY_ACTION, array( self::class, 'serveWalletPassProxy' ) );
 	}
 
 	public static function addWalletColumn( array $fields ): array {
@@ -20,7 +23,7 @@ final class Api {
 			'field_name'        => 'ticket_apple_wallet_pass_column',
 			'field_title'       => __( 'Wallet Pass', 'tc' ),
 			'field_type'        => 'function',
-			'function'          => 'tc_get_wallet_pass_for_ticket',
+			'function'          => array( self::class, 'renderWalletButton' ),
 			'field_description' => '',
 			'post_field_type'   => 'post_meta',
 		);
@@ -30,8 +33,14 @@ final class Api {
 
 	public const PASS_URL_META_KEY = '_tc_wallet_pass_url';
 
-	public static function renderWalletPassForTicket( int $order_attendee_id ): void {
-		self::renderWalletButton( self::getOrGeneratePassUrl( $order_attendee_id ) );
+	public static function tc_get_wallet_pass_for_ticket( int $order_id ): void {
+		if ( ! class_exists( '\Tickera\TC_Orders' ) ) {
+			return;
+		}
+		$order_attendees = \Tickera\TC_Orders::get_tickets_ids( (int) $order_id );
+		foreach ( (array) $order_attendees as $order_attendee_id ) {
+			self::getOrGeneratePassUrl( (int) $order_attendee_id );
+		}
 	}
 
 	private static function getOrGeneratePassUrl( int $order_attendee_id ): ?string {
@@ -41,20 +50,20 @@ final class Api {
 			return $cached;
 		}
 
-		$events = get_post_meta( $order_attendee_id, '', false );
+		$ticket_meta = get_post_meta( $order_attendee_id, '', false );
 
-		$event_id    = $events['event_id'][0] ?? null;
-		$ticket_code = $events['ticket_code'][0] ?? '';
-		$first_name  = $events['first_name'][0] ?? '';
-		$last_name   = $events['last_name'][0] ?? '';
+		$event_id    = $ticket_meta['event_id'][0] ?? null;
+		$ticket_code = $ticket_meta['ticket_code'][0] ?? '';
+		$first_name  = isset( $ticket_meta['first_name'] ) ? reset( $ticket_meta['first_name'] ) : '';
+		$last_name   = isset( $ticket_meta['last_name'] ) ? reset( $ticket_meta['last_name'] ) : '';
 
-		if ( empty( $event_id ) || empty( $ticket_code ) || ! class_exists( 'TC_Event' ) || ! class_exists( 'TC_Ticket' ) ) {
+		if ( empty( $event_id ) || empty( $ticket_code ) || ! class_exists( 'Tickera\TC_Event' ) || ! class_exists( 'Tickera\TC_Ticket' ) ) {
 			return null;
 		}
 
-		$event_obj    = new \TC_Event( $event_id );
+		$event_obj    = new \Tickera\TC_Event( (int) $event_id );
 		$location_obj = get_post_meta( (int) $event_id, '', false );
-		$ticket       = new \TC_Ticket( $order_attendee_id );
+		$ticket       = new \Tickera\TC_Ticket( $order_attendee_id );
 
 		$pass_url = self::appleWalletPass(
 			(string) ( $event_obj->details->post_title ?? '' ),
@@ -97,12 +106,13 @@ final class Api {
 				continue;
 			}
 			$pass_url         = self::getOrGeneratePassUrl( (int) $order_attendee_id );
+			$wallet_url       = self::buildAppleWalletUrl( $pass_url );
 			$ticket_type_id   = isset( $ticket_meta['ticket_type_id'] ) ? reset( $ticket_meta['ticket_type_id'] ) : '';
 			$ticket_type_name = get_the_title( $ticket_type_id );
-			if ( ! empty( $pass_url ) ) {
+			if ( ! empty( $wallet_url ) ) {
 				$passes[] = array(
 					'title' => $ticket_type_name,
-					'url'   => $pass_url,
+					'url'   => $wallet_url,
 				);
 			}
 		}
@@ -127,45 +137,6 @@ final class Api {
 			echo '<a href="' . esc_url( $pass['url'] ) . '"><img src="' . esc_url( $apple_badge ) . '" width="100" alt="' . esc_attr__( 'Add to Apple Wallet', 'tcawp' ) . '" style="display:block;margin-top:8px;" /></a>';
 			echo '</p>';
 		}
-	}
-
-	public static function addThankyouWalletPass( int $order_id ): void {
-		$order_attendees = \Tickera\TC_Orders::get_tickets_ids( $order_id );
-
-		if ( empty( $order_attendees ) ) {
-			return;
-		}
-
-		$passes = array();
-		foreach ( $order_attendees as $order_attendee_id ) {
-			$ticket_meta = get_post_meta( $order_attendee_id );
-			$ticket_code = isset( $ticket_meta['ticket_code'] ) ? reset( $ticket_meta['ticket_code'] ) : '';
-			if ( '' === $ticket_code ) {
-				continue;
-			}
-			$pass_url         = self::getOrGeneratePassUrl( (int) $order_attendee_id );
-			$ticket_type_id   = isset( $ticket_meta['ticket_type_id'] ) ? reset( $ticket_meta['ticket_type_id'] ) : '';
-			$ticket_type_name = get_the_title( $ticket_type_id );
-			if ( ! empty( $pass_url ) ) {
-				$passes[] = array(
-					'title' => $ticket_type_name,
-					'url'   => $pass_url,
-				);
-			}
-		}
-
-		if ( empty( $passes ) ) {
-			return;
-		}
-
-		echo '<section class="woocommerce-order-wallet-passes">';
-		echo '<h2>' . esc_html__( 'Your Wallet Passes', 'tcawp' ) . '</h2>';
-		foreach ( $passes as $pass ) {
-			echo '<p><strong>' . esc_html( $pass['title'] ) . '</strong><br>';
-			self::renderWalletButton( $pass['url'] );
-			echo '</p>';
-		}
-		echo '</section>';
 	}
 
 	/**
@@ -209,7 +180,7 @@ final class Api {
 			// log the error for debugging purposes.
 			if ( class_exists( 'WC_Logger' ) ) {
 				$logger = wc_get_logger();
-				$logger->error( 'Connector class not found. Ensure the CommerceBird plugin is active.', array( 'source' => 'tickera-wallet-pass' ) );
+				$logger->error( 'Connector class not found . Ensure the CommerceBird plugin is active . ', array( 'source' => 'tickera - wallet - pass' ) );
 			}
 			return null;
 		}
@@ -219,14 +190,14 @@ final class Api {
 		// Log the response for debugging purposes.
 		if ( class_exists( 'WC_Logger' ) ) {
 			$logger = wc_get_logger();
-			$logger->info( 'Wallet Pass API response: ' . print_r( $response, true ), array( 'source' => 'tickera-wallet-pass' ) );
+			$logger->info( 'Wallet Pass API response: ' . print_r( $response, true ), array( 'source' => 'tickera - wallet - pass' ) );
 		}
 
 		if ( is_wp_error( $response ) ) {
 			// Save the error via WC Logger for debugging purposes.
 			if ( class_exists( 'WC_Logger' ) ) {
 				$logger = wc_get_logger();
-				$logger->error( 'Wallet Pass API request failed: ' . $response->get_error_message(), array( 'source' => 'tickera-wallet-pass' ) );
+				$logger->error( 'Wallet Pass API request failed: ' . $response->get_error_message(), array( 'source' => 'tickera - wallet - pass' ) );
 			}
 			return null;
 		}
@@ -234,7 +205,7 @@ final class Api {
 		if ( ! is_array( $response ) ) {
 			if ( class_exists( 'WC_Logger' ) ) {
 				$logger = wc_get_logger();
-				$logger->error( 'Wallet Pass API response is not an array.', array( 'source' => 'tickera-wallet-pass' ) );
+				$logger->error( 'Wallet Pass API response is not an array . ', array( 'source' => 'tickera - wallet - pass' ) );
 			}
 			return null;
 		}
@@ -242,7 +213,7 @@ final class Api {
 		if ( ( $response['code'] ?? null ) !== 200 ) {
 			if ( class_exists( 'WC_Logger' ) ) {
 				$logger = wc_get_logger();
-				$logger->error( 'Wallet Pass API returned non-200: ' . ( $response['message'] ?? 'unknown error' ), array( 'source' => 'tickera-wallet-pass' ) );
+				$logger->error( 'Wallet Pass API returned non - 200: ' . ( $response['message'] ?? 'unknown error' ), array( 'source' => 'tickera - wallet - pass' ) );
 			}
 			return null;
 		}
@@ -257,7 +228,78 @@ final class Api {
 		return esc_url_raw( $pass_url );
 	}
 
-	private static function renderWalletButton( ?string $pass_url ): void {
+	private static function buildAppleWalletUrl( ?string $pass_url ): ?string {
+		if ( empty( $pass_url ) || ! is_string( $pass_url ) ) {
+			return null;
+		}
+
+		$signature = hash_hmac( 'sha256', $pass_url, wp_salt( 'auth' ) );
+
+		return add_query_arg(
+			array(
+				'action' => self::PROXY_ACTION,
+				'pass'   => rawurlencode( $pass_url ),
+				'sig'    => $signature,
+			),
+			admin_url( 'admin - post . php' )
+		);
+	}
+
+	public static function serveWalletPassProxy(): void {
+		$encoded_pass = isset( $_GET['pass'] ) ? (string) wp_unslash( $_GET['pass'] ) : '';
+		$signature    = isset( $_GET['sig'] ) ? (string) wp_unslash( $_GET['sig'] ) : '';
+
+		$pass_url = rawurldecode( $encoded_pass );
+		$pass_url = esc_url_raw( $pass_url );
+
+		$expected_signature = hash_hmac( 'sha256', $pass_url, wp_salt( 'auth' ) );
+
+		if ( '' === $pass_url || '' === $signature || ! hash_equals( $expected_signature, $signature ) ) {
+			status_header( 403 );
+			exit;
+		}
+
+		$response = wp_remote_get(
+			$pass_url,
+			array(
+				'timeout'            => 20,
+				'redirection'        => 5,
+				'reject_unsafe_urls' => true,
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			status_header( 502 );
+			exit;
+		}
+
+		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
+			status_header( 502 );
+			exit;
+		}
+
+		$body = wp_remote_retrieve_body( $response );
+		if ( '' === $body ) {
+			status_header( 502 );
+			exit;
+		}
+
+		while ( ob_get_level() > 0 ) {
+			ob_end_clean();
+		}
+
+		header( 'Content-Type: application/vnd.apple.pkpass' );
+		header( 'Content-Disposition: inline; filename="ticket.pkpass"' );
+		header( 'X-Content-Type-Options: nosniff' );
+		header( 'Cache-Control: no-store, no-cache, must-revalidate, max-age=0' );
+		header( 'Pragma: no-cache' );
+		header( 'Content-Length: ' . strlen( $body ) );
+
+		echo $body; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		exit;
+	}
+
+	public static function renderWalletButton( ?string $pass_url ): void {
 		if ( empty( $pass_url ) ) {
 			echo esc_html__( 'Wallet pass unavailable.', 'tcawp' );
 			return;
@@ -271,6 +313,13 @@ final class Api {
 		}
 
 		$apple_badge = plugins_url( 'includes/add-to-apple-wallet.jpg', dirname( __DIR__ ) . '/tickera-wallet-pass.php' );
-		echo '<a href="' . esc_url( $pass_url ) . '" target="_blank" rel="noopener noreferrer"><img src="' . esc_url( $apple_badge ) . '" width="100" alt="Add to Apple Wallet" /></a>';
+		$wallet_url  = self::buildAppleWalletUrl( $pass_url );
+
+		if ( empty( $wallet_url ) ) {
+			echo esc_html__( 'Wallet pass unavailable.', 'tcawp' );
+			return;
+		}
+
+		echo '<a href="' . esc_url( $wallet_url ) . '" rel="noopener noreferrer"><img src="' . esc_url( $apple_badge ) . '" width="100" alt="Add to Apple Wallet" /></a>';
 	}
 }
