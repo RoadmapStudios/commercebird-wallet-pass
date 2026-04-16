@@ -150,7 +150,15 @@ final class Plugin {
 		}
 
 		$htaccess = \get_home_path() . '.htaccess';
-		$lines    = array( 'AddType application/vnd.apple.pkpass    pkpass' );
+		$lines    = array(
+			'AddType application/vnd.apple.pkpass pkpass',
+			'<FilesMatch "\\.pkpass$">',
+			'<IfModule mod_headers.c>',
+			'Header set Content-Disposition "inline"',
+			'Header set X-Content-Type-Options "nosniff"',
+			'</IfModule>',
+			'</FilesMatch>',
+		);
 
 		\insert_with_markers( $htaccess, 'Apple Wallet Pass', $lines );
 	}
