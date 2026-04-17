@@ -270,7 +270,6 @@ final class Api {
 			'first_name'        => $first_name,
 			'last_name'         => $last_name,
 			'icon_url'          => (string) ( $settings['icon_file'] ?? '' ),
-			'qr_code_type'      => (string) ( $settings['qr_code_type'] ?? '' ),
 			'logo_text'         => (string) ( $settings['logo_text'] ?? '' ),
 			'background_color'  => (string) ( $settings['background_color'] ?? '' ),
 			'organisation_name' => (string) ( $settings['organisation_name'] ?? '' ),

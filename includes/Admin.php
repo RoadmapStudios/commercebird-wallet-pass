@@ -23,6 +23,9 @@ final class Admin {
 			\wp_enqueue_media();
 		}
 
+		\wp_enqueue_style( 'wp-color-picker' );
+		\wp_enqueue_script( 'wp-color-picker' );
+
 		$settings = self::saveSettings();
 
 		if ( $settings === null ) {
@@ -38,18 +41,6 @@ final class Admin {
 						<div class="inside">
 							<table class="form-table">
 								<tbody>
-									<tr>
-										<th scope="row"><label for="qr_code_type"><?php \esc_html_e( 'QR Code type', 'tcawp' ); ?></label></th>
-										<td>
-											<select name="tc_apple_wallet[qr_code_type]" id="qr_code_type">
-												<option value="PKBarcodeFormatQR" <?php \selected( $settings['qr_code_type'], 'PKBarcodeFormatQR' ); ?>>PKBarcodeFormatQR</option>
-												<option value="PKBarcodeFormatPDF417" <?php \selected( $settings['qr_code_type'], 'PKBarcodeFormatPDF417' ); ?>>PKBarcodeFormatPDF417</option>
-												<option value="PKBarcodeFormatAztec" <?php \selected( $settings['qr_code_type'], 'PKBarcodeFormatAztec' ); ?>>PKBarcodeFormatAztec</option>
-												<option value="PKBarcodeFormatCode128" <?php \selected( $settings['qr_code_type'], 'PKBarcodeFormatCode128' ); ?>>PKBarcodeFormatCode128</option>
-											</select>
-											<p class="description"><?php \esc_html_e( 'QR code type', 'tcawp' ); ?></p>
-										</td>
-									</tr>
 									<?php if ( ! empty( $settings['icon_file'] ) ) : ?>
 									<tr>
 										<th scope="row">&nbsp;</th>
@@ -74,7 +65,7 @@ final class Admin {
 									<tr>
 										<th scope="row"><label for="background_color"><?php \esc_html_e( 'Background Color', 'tcawp' ); ?></label></th>
 										<td>
-											<input name="tc_apple_wallet[background_color]" type="text" id="background_color" value="<?php echo \esc_attr( $settings['background_color'] ); ?>" class="regular-text" />
+											<input name="tc_apple_wallet[background_color]" type="text" id="background_color" value="<?php echo \esc_attr( $settings['background_color'] ); ?>" class="tc-color-picker" data-default-color="#aaaaaa" />
 										</td>
 									</tr>
 									<tr>
@@ -113,6 +104,8 @@ final class Admin {
 
 				frame.open();
 			});
+
+			$('.tc-color-picker').wpColorPicker();
 		});
 		</script>
 		<?php
@@ -137,7 +130,6 @@ final class Admin {
 		$posted = \wp_unslash( $_POST['tc_apple_wallet'] );
 
 		$settings = array(
-			'qr_code_type'      => \sanitize_text_field( (string) ( $posted['qr_code_type'] ?? 'PKBarcodeFormatQR' ) ),
 			'logo_text'         => \sanitize_text_field( (string) ( $posted['logo_text'] ?? '' ) ),
 			'background_color'  => \sanitize_text_field( (string) ( $posted['background_color'] ?? '#aaaaaa' ) ),
 			'organisation_name' => \sanitize_text_field( (string) ( $posted['organisation_name'] ?? '' ) ),
@@ -158,7 +150,6 @@ final class Admin {
 
 		return array_merge(
 			array(
-				'qr_code_type'      => 'PKBarcodeFormatQR',
 				'icon_file'         => '',
 				'icon_file_id'      => 0,
 				'logo_text'         => '',
