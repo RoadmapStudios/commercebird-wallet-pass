@@ -1,7 +1,7 @@
 === CommerceBird - Wallet Pass for Tickera ===
 Contributors: fawadinho
 Author link: https://commercebird.com
-Tags: woocommerce,apple,wallet,tickera,events
+Tags: woocommerce,apple,wallet,tickets,events
 Requires at least: 6.5
 Tested up to: 6.9
 Requires PHP: 8.2
@@ -45,6 +45,20 @@ This is not just another plugin — it’s the essential Tickera wallet pass ext
 
 Empower your event attendees with mobile wallet passes, reduce friction at the door, and position your Tickera events for the future of ticketing.
 
+== Frequently Asked Questions ==
+
+= Q: Do I need a paid plan to use this plugin? =
+A: Yes, you need a Premium plan at commercebird.com and the main commercebird plugin.
+
+= Q: How quickly and easy can I set this up? =
+A: Very easy, all you need is to follow the installation steps and you can be done in 5 minutes.
+
+= Q: Where are the passes stored? =
+A: Our server stores the generated passes in your site's media library. They get automatically deleted when an event is cancelled or has taken place.
+
+= Q: Where can the customer view the Ticket's pass and download it? =
+A: On the Thank You page after payment and in the email confirmation. 
+
 == Installation ==
 
 **To install CommerceBird - Wallet Pass for Tickera, follow these steps:**
@@ -57,6 +71,11 @@ Empower your event attendees with mobile wallet passes, reduce friction at the d
 6. Go to your store's wp-admin menu > commercebird > paste the subscription id, token and your e-mail address and click save!
 7. Go to Tickera > Settings > Apple Wallet Pass > configure your Passes styling settings.
 8. That's all! Now you can test it by placing an event order via your iOS or Android device.
+
+== Screenshots ==
+1. Apple Wallet Settings in Tickera
+2. Thankyou page to download the passes
+3. CommerceBird welcome page plugin
 
 == Changelog ==
 = 1.0.0 - 30 April 2026 =
