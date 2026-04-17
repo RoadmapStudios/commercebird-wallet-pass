@@ -2,12 +2,19 @@
 
 declare(strict_types=1);
 
-namespace Tickera\WalletPass;
+namespace CommerceBird\WalletPass;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * API integration for generating and rendering Apple Wallet passes.
+ */
 final class Api {
 
 	private const CONNECTOR_ENDPOINT = 'customs/wallet/pass';
-	private const PROXY_ACTION       = 'tcawp_wallet_pass';
+	private const PROXY_ACTION       = 'commercebird_wallet_pass';
 	public const  PASS_URL_META_KEY  = '_tc_wallet_pass_url';
 
 	/**
@@ -17,7 +24,7 @@ final class Api {
 	 *
 	 * @var string[]
 	 */
-	private static array $passUrlQueue = [];
+	private static array $pass_url_queue = array();
 
 	public static function register(): void {
 		add_filter( 'tc_owner_info_orders_table_fields_front', array( self::class, 'addWalletColumn' ) );
@@ -35,7 +42,7 @@ final class Api {
 		$fields[] = array(
 			'id'                => 'ticket_apple_wallet_pass',
 			'field_name'        => self::PASS_URL_META_KEY,
-			'field_title'       => __( 'Wallet Pass', 'tc' ),
+			'field_title'       => __( 'Wallet Pass', 'commercebird-wallet-pass' ),
 			'field_type'        => 'function',
 			'function'          => array( self::class, 'renderWalletButton' ),
 			'field_description' => '',
@@ -57,7 +64,7 @@ final class Api {
 		foreach ( (array) \Tickera\TC_Orders::get_tickets_ids( $order_id ) as $ticket_id ) {
 			$url = self::generateURLforWallet( (int) $ticket_id );
 			if ( $url ) {
-				self::$passUrlQueue[] = $url;
+				self::$pass_url_queue[] = $url;
 			}
 		}
 	}
@@ -74,7 +81,7 @@ final class Api {
 		foreach ( (array) \Tickera\TC_Orders::get_tickets_ids( $order_id ) as $ticket_id ) {
 			$url = (string) get_post_meta( (int) $ticket_id, self::PASS_URL_META_KEY, true );
 			if ( '' !== $url ) {
-				self::$passUrlQueue[] = $url;
+				self::$pass_url_queue[] = $url;
 			}
 		}
 	}
@@ -145,7 +152,9 @@ final class Api {
 	 * iOS Wallet requires. Accessible to unauthenticated users via admin_post_nopriv_.
 	 */
 	public static function serveWalletPassProxy(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Admin page detection.
 		$encoded_pass = isset( $_GET['pass'] ) ? (string) wp_unslash( $_GET['pass'] ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Admin page detection.
 		$signature    = isset( $_GET['sig'] ) ? (string) wp_unslash( $_GET['sig'] ) : '';
 		$pass_url     = esc_url_raw( rawurldecode( $encoded_pass ) );
 		$expected_sig = hash_hmac( 'sha256', $pass_url, wp_salt( 'auth' ) );
@@ -227,19 +236,19 @@ final class Api {
 		}
 
 		if ( $plain_text ) {
-			echo "\n" . esc_html__( 'Wallet Passes', 'tcawp' ) . "\n";
+			echo "\n" . esc_html__( 'Wallet Passes', 'commercebird-wallet-pass' ) . "\n";
 			foreach ( $passes as $pass ) {
-				echo esc_html( $pass['title'] ) . ': ' . $pass['url'] . "\n";
+				echo esc_html( $pass['title'] ) . ': ' . esc_url( $pass['url'] ) . "\n";
 			}
 			return;
 		}
 
 		$apple_badge = plugins_url( 'includes/add-to-apple-wallet.jpg', dirname( __DIR__ ) . '/tickera-wallet-pass.php' );
-		echo '<h2 style="color:#333;font-family:inherit;">' . esc_html__( 'Your Wallet Passes', 'tcawp' ) . '</h2>';
+		echo '<h2 style="color:#333;font-family:inherit;">' . esc_html__( 'Your Wallet Passes', 'commercebird-wallet-pass' ) . '</h2>';
 		foreach ( $passes as $pass ) {
 			echo '<p>';
 			echo '<strong>' . esc_html( $pass['title'] ) . '</strong><br>';
-			echo '<a href="' . esc_url( self::buildProxyUrl( $pass['url'] ) ) . '"><img src="' . esc_url( $apple_badge ) . '" width="100" alt="' . esc_attr__( 'Add to Apple Wallet', 'tcawp' ) . '" style="display:block;margin-top:8px;" /></a>';
+			echo '<a href="' . esc_url( self::buildProxyUrl( $pass['url'] ) ) . '"><img src="' . esc_url( $apple_badge ) . '" width="100" alt="' . esc_attr__( 'Add to Apple Wallet', 'commercebird-wallet-pass' ) . '" style="display:block;margin-top:8px;" /></a>';
 			echo '</p>';
 		}
 	}
@@ -285,10 +294,6 @@ final class Api {
 		$connector = new \CommerceBird\Admin\Connectors\Connector();
 		$response  = $connector->request( self::CONNECTOR_ENDPOINT, 'POST', $payload );
 
-		if ( class_exists( 'WC_Logger' ) ) {
-			wc_get_logger()->info( 'Wallet Pass API response: ' . print_r( $response, true ), array( 'source' => 'tickera-wallet-pass' ) );
-		}
-
 		if ( is_wp_error( $response ) ) {
 			if ( class_exists( 'WC_Logger' ) ) {
 				wc_get_logger()->error( 'Wallet Pass API request failed: ' . $response->get_error_message(), array( 'source' => 'tickera-wallet-pass' ) );
@@ -317,25 +322,28 @@ final class Api {
 		// Tickera passes the field_name string, not the meta value, to callable-array callbacks.
 		// Consume the next pre-generated URL from the queue instead.
 		if ( '' === $pass_url || ! str_starts_with( $pass_url, 'http' ) ) {
-			$pass_url = array_shift( self::$passUrlQueue ) ?? '';
+			$pass_url = array_shift( self::$pass_url_queue ) ?? '';
 		}
 
 		if ( '' === $pass_url ) {
 			return;
 		}
 
-		$android = isset( $_SERVER['HTTP_USER_AGENT'] ) && stripos( (string) $_SERVER['HTTP_USER_AGENT'], 'Android' ) !== false;
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- User agent is only used for basic string checks, not output or API calls.
+		$user_agent = isset( $_SERVER['HTTP_USER_AGENT'] ) ? \wp_unslash( (string) $_SERVER['HTTP_USER_AGENT'] ) : '';
+		$android    = '' !== $user_agent && stripos( $user_agent, 'Android' ) !== false;
 
 		if ( $android ) {
+			$android_badge = plugins_url( 'includes/badge_web_generic.png', dirname( __DIR__ ) . '/tickera-wallet-pass.php' );
 			echo '<a href="https://www.walletpasses.io?u=' . rawurlencode( $pass_url ) . '" target="_system" rel="noopener noreferrer">'
-				. '<img src="https://www.walletpasses.io/badges/badge_web_generic_en@2x.png" alt="' . esc_attr__( 'Add to Wallet', 'tcawp' ) . '" />'
+				. '<img src="' . esc_url( $android_badge ) . '" alt="' . esc_attr__( 'Add to Wallet', 'commercebird-wallet-pass' ) . '" />'
 				. '</a>';
 			return;
 		}
 
-		$apple_badge = plugins_url( 'includes/add-to-apple-wallet.jpg', dirname( __DIR__ ) . '/tickera-wallet-pass.php' );
+		$apple_badge = plugins_url( 'includes/add-to-apple-wallet.svg', dirname( __DIR__ ) . '/tickera-wallet-pass.php' );
 		echo '<a href="' . esc_url( self::buildProxyUrl( $pass_url ) ) . '" rel="noopener noreferrer">'
-			. '<img src="' . esc_url( $apple_badge ) . '" width="100" alt="' . esc_attr__( 'Add to Apple Wallet', 'tcawp' ) . '" />'
+			. '<img src="' . esc_url( $apple_badge ) . '" width="100" alt="' . esc_attr__( 'Add to Apple Wallet', 'commercebird-wallet-pass' ) . '" />'
 			. '</a>';
 	}
 }

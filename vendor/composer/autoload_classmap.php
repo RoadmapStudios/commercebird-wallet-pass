@@ -7,6 +7,9 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'Attribute' => $vendorDir . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
+    'CommerceBird\\WalletPass\\Admin' => $baseDir . '/includes/Admin.php',
+    'CommerceBird\\WalletPass\\Api' => $baseDir . '/includes/Api.php',
+    'CommerceBird\\WalletPass\\Plugin' => $baseDir . '/includes/Plugin.php',
     'Composer\\InstalledVersions' => $vendorDir . '/composer/InstalledVersions.php',
     'JsonException' => $vendorDir . '/symfony/polyfill-php73/Resources/stubs/JsonException.php',
     'PHPCSStandards\\Composer\\Plugin\\Installers\\PHPCodeSniffer\\Plugin' => $vendorDir . '/dealerdirect/phpcodesniffer-composer-installer/src/Plugin.php',
@@ -174,9 +177,6 @@ return array(
     'SzepeViktor\\PHPStan\\WordPress\\WpParseUrlFunctionDynamicReturnTypeExtension' => $vendorDir . '/szepeviktor/phpstan-wordpress/src/WpParseUrlFunctionDynamicReturnTypeExtension.php',
     'SzepeViktor\\PHPStan\\WordPress\\WpThemeGetDynamicMethodReturnTypeExtension' => $vendorDir . '/szepeviktor/phpstan-wordpress/src/WpThemeGetDynamicMethodReturnTypeExtension.php',
     'SzepeViktor\\PHPStan\\WordPress\\WpThemeMagicPropertiesClassReflectionExtension' => $vendorDir . '/szepeviktor/phpstan-wordpress/src/WpThemeMagicPropertiesClassReflectionExtension.php',
-    'Tickera\\WalletPass\\Admin' => $baseDir . '/includes/Admin.php',
-    'Tickera\\WalletPass\\Api' => $baseDir . '/includes/Api.php',
-    'Tickera\\WalletPass\\Plugin' => $baseDir . '/includes/Plugin.php',
     'UnhandledMatchError' => $vendorDir . '/symfony/polyfill-php80/Resources/stubs/UnhandledMatchError.php',
     'ValueError' => $vendorDir . '/symfony/polyfill-php80/Resources/stubs/ValueError.php',
     'WP_Dependency_Installer' => $vendorDir . '/afragen/wp-dependency-installer/wp-dependency-installer.php',

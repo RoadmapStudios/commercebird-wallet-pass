@@ -2,8 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Tickera\WalletPass;
+namespace CommerceBird\WalletPass;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * Admin settings screen integration for Apple Wallet Pass support.
+ */
 final class Admin {
 
 	private const OPTION_KEY = 'tc_apple_wallet_settings';
@@ -14,7 +21,7 @@ final class Admin {
 	}
 
 	public static function addMenu( array $menus ): array {
-		$menus['wallet'] = \__( 'Apple Wallet Pass', 'tc' );
+		$menus['wallet'] = \__( 'Apple Wallet Pass', 'commercebird-wallet-pass' );
 		return $menus;
 	}
 
@@ -37,7 +44,7 @@ final class Admin {
 			<div id="poststuff">
 				<form action="" method="post">
 					<div class="postbox">
-						<h3 class="hndle"><span><?php \esc_html_e( 'Apple Wallet Pass', 'tcawp' ); ?></span></h3>
+						<h3 class="hndle"><span><?php \esc_html_e( 'Apple Wallet Pass', 'commercebird-wallet-pass' ); ?></span></h3>
 						<div class="inside">
 							<table class="form-table">
 								<tbody>
@@ -48,28 +55,28 @@ final class Admin {
 									</tr>
 									<?php endif; ?>
 									<tr>
-										<th scope="row"><label for="icon_file"><?php \esc_html_e( 'Icon File', 'tcawp' ); ?></label></th>
+										<th scope="row"><label for="icon_file"><?php \esc_html_e( 'Icon File', 'commercebird-wallet-pass' ); ?></label></th>
 										<td>
 											<input type="hidden" name="icon_file_id" id="icon_file_id" value="<?php echo \esc_attr( (string) $settings['icon_file_id'] ); ?>" />
 											<input name="icon_file" type="text" id="icon_file" value="<?php echo \esc_attr( $settings['icon_file'] ); ?>" class="regular-text" />
 											<input type="button" id="upload_icon" value="Choose File" class="button" />
-											<p class="description"><?php \esc_html_e( 'Icon image URL', 'tcawp' ); ?></p>
+											<p class="description"><?php \esc_html_e( 'Icon image URL', 'commercebird-wallet-pass' ); ?></p>
 										</td>
 									</tr>
 									<tr>
-										<th scope="row"><label for="logo_text"><?php \esc_html_e( 'Logo Text', 'tcawp' ); ?></label></th>
+										<th scope="row"><label for="logo_text"><?php \esc_html_e( 'Logo Text', 'commercebird-wallet-pass' ); ?></label></th>
 										<td>
 											<input name="tc_apple_wallet[logo_text]" type="text" id="logo_text" value="<?php echo \esc_attr( $settings['logo_text'] ); ?>" class="regular-text" />
 										</td>
 									</tr>
 									<tr>
-										<th scope="row"><label for="background_color"><?php \esc_html_e( 'Background Color', 'tcawp' ); ?></label></th>
+										<th scope="row"><label for="background_color"><?php \esc_html_e( 'Background Color', 'commercebird-wallet-pass' ); ?></label></th>
 										<td>
 											<input name="tc_apple_wallet[background_color]" type="text" id="background_color" value="<?php echo \esc_attr( $settings['background_color'] ); ?>" class="tc-color-picker" data-default-color="#aaaaaa" />
 										</td>
 									</tr>
 									<tr>
-										<th scope="row"><label for="organisation_name"><?php \esc_html_e( 'Organization Name', 'tcawp' ); ?></label></th>
+										<th scope="row"><label for="organisation_name"><?php \esc_html_e( 'Organization Name', 'commercebird-wallet-pass' ); ?></label></th>
 										<td>
 											<input name="tc_apple_wallet[organisation_name]" type="text" id="organisation_name" value="<?php echo \esc_attr( $settings['organisation_name'] ); ?>" class="regular-text" />
 										</td>
@@ -89,12 +96,12 @@ final class Admin {
 					<span style="color:#fff;font-size:22px;font-weight:700;line-height:1;">&#9889;</span>
 				</div>
 				<div>
-					<strong style="font-size:14px;color:#1d2327;"><?php \esc_html_e( 'Powered by CommerceBird — Premium Subscription Required', 'tcawp' ); ?></strong>
+					<strong style="font-size:14px;color:#1d2327;"><?php \esc_html_e( 'Powered by CommerceBird — Premium Subscription Required', 'commercebird-wallet-pass' ); ?></strong>
 					<p style="margin:4px 0 0;color:#50575e;font-size:13px;">
 						<?php
 							\printf(
 							/* translators: %s: CommerceBird link */
-								\esc_html__( 'This Wallet Pass feature is powered by %s. A Premium subscription is required for passes to be generated and delivered to your customers.', 'tcawp' ),
+								\esc_html__( 'This Wallet Pass feature is powered by %s. A Premium subscription is required for passes to be generated and delivered to your customers.', 'commercebird-wallet-pass' ),
 								'<a href="https://commercebird.com" target="_blank" rel="noopener noreferrer" style="color:#FF6B00;font-weight:600;">CommerceBird</a>'
 							);
 						?>
@@ -145,12 +152,10 @@ final class Admin {
 			return self::getSettings();
 		}
 
-		$posted = \wp_unslash( $_POST['tc_apple_wallet'] );
-
 		$settings = array(
-			'logo_text'         => \sanitize_text_field( (string) ( $posted['logo_text'] ?? '' ) ),
-			'background_color'  => \sanitize_text_field( (string) ( $posted['background_color'] ?? '#aaaaaa' ) ),
-			'organisation_name' => \sanitize_text_field( (string) ( $posted['organisation_name'] ?? '' ) ),
+			'logo_text'         => \sanitize_text_field( \wp_unslash( (string) ( $_POST['tc_apple_wallet']['logo_text'] ?? '' ) ) ),
+			'background_color'  => \sanitize_text_field( \wp_unslash( (string) ( $_POST['tc_apple_wallet']['background_color'] ?? '#aaaaaa' ) ) ),
+			'organisation_name' => \sanitize_text_field( \wp_unslash( (string) ( $_POST['tc_apple_wallet']['organisation_name'] ?? '' ) ) ),
 			'icon_file'         => isset( $_POST['icon_file'] ) ? \esc_url_raw( (string) \wp_unslash( $_POST['icon_file'] ) ) : '',
 			'icon_file_id'      => isset( $_POST['icon_file_id'] ) ? \absint( $_POST['icon_file_id'] ) : 0,
 		);

@@ -7,7 +7,6 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'Whoops\\' => array($vendorDir . '/filp/whoops/src/Whoops'),
-    'Tickera\\WalletPass\\' => array($baseDir . '/includes'),
     'SzepeViktor\\PHPStan\\WordPress\\' => array($vendorDir . '/szepeviktor/phpstan-wordpress/src'),
     'Symfony\\Polyfill\\Php80\\' => array($vendorDir . '/symfony/polyfill-php80'),
     'Symfony\\Polyfill\\Php73\\' => array($vendorDir . '/symfony/polyfill-php73'),
@@ -16,4 +15,5 @@ return array(
     'Psr\\Log\\' => array($vendorDir . '/psr/log/src'),
     'PHPStan\\ExtensionInstaller\\' => array($vendorDir . '/phpstan/extension-installer/src'),
     'PHPCSStandards\\Composer\\Plugin\\Installers\\PHPCodeSniffer\\' => array($vendorDir . '/dealerdirect/phpcodesniffer-composer-installer/src'),
+    'CommerceBird\\WalletPass\\' => array($baseDir . '/includes'),
 );

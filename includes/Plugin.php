@@ -2,7 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Tickera\WalletPass;
+namespace CommerceBird\WalletPass;
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 final class Plugin {
 
@@ -136,7 +140,7 @@ final class Plugin {
 		}
 	}
 
-	public static function setAppleMimeType(): void {
+	public static function wpass_set_apple_mime_type(): void {
 		if ( ! \function_exists( 'insert_with_markers' ) && \defined( 'ABSPATH' ) ) {
 			require_once \ABSPATH . 'wp-admin/includes/misc.php';
 		}

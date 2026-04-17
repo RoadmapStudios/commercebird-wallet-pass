@@ -19,10 +19,6 @@ class ComposerStaticInit33bb2e837f5bff133b486c79ef8b0804
         array (
             'Whoops\\' => 7,
         ),
-        'T' =>
-        array (
-            'Tickera\\WalletPass\\' => 19,
-        ),
         'S' =>
         array (
             'SzepeViktor\\PHPStan\\WordPress\\' => 30,
@@ -37,16 +33,16 @@ class ComposerStaticInit33bb2e837f5bff133b486c79ef8b0804
             'PHPStan\\ExtensionInstaller\\' => 27,
             'PHPCSStandards\\Composer\\Plugin\\Installers\\PHPCodeSniffer\\' => 57,
         ),
+        'C' =>
+        array (
+            'CommerceBird\\WalletPass\\' => 24,
+        ),
     );
 
     public static $prefixDirsPsr4 = array (
         'Whoops\\' =>
         array (
             0 => __DIR__ . '/..' . '/filp/whoops/src/Whoops',
-        ),
-        'Tickera\\WalletPass\\' =>
-        array (
-            0 => __DIR__ . '/../..' . '/includes',
         ),
         'SzepeViktor\\PHPStan\\WordPress\\' =>
         array (
@@ -80,10 +76,17 @@ class ComposerStaticInit33bb2e837f5bff133b486c79ef8b0804
         array (
             0 => __DIR__ . '/..' . '/dealerdirect/phpcodesniffer-composer-installer/src',
         ),
+        'CommerceBird\\WalletPass\\' =>
+        array (
+            0 => __DIR__ . '/../..' . '/includes',
+        ),
     );
 
     public static $classMap = array (
         'Attribute' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
+        'CommerceBird\\WalletPass\\Admin' => __DIR__ . '/../..' . '/includes/Admin.php',
+        'CommerceBird\\WalletPass\\Api' => __DIR__ . '/../..' . '/includes/Api.php',
+        'CommerceBird\\WalletPass\\Plugin' => __DIR__ . '/../..' . '/includes/Plugin.php',
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
         'JsonException' => __DIR__ . '/..' . '/symfony/polyfill-php73/Resources/stubs/JsonException.php',
         'PHPCSStandards\\Composer\\Plugin\\Installers\\PHPCodeSniffer\\Plugin' => __DIR__ . '/..' . '/dealerdirect/phpcodesniffer-composer-installer/src/Plugin.php',
@@ -251,9 +254,6 @@ class ComposerStaticInit33bb2e837f5bff133b486c79ef8b0804
         'SzepeViktor\\PHPStan\\WordPress\\WpParseUrlFunctionDynamicReturnTypeExtension' => __DIR__ . '/..' . '/szepeviktor/phpstan-wordpress/src/WpParseUrlFunctionDynamicReturnTypeExtension.php',
         'SzepeViktor\\PHPStan\\WordPress\\WpThemeGetDynamicMethodReturnTypeExtension' => __DIR__ . '/..' . '/szepeviktor/phpstan-wordpress/src/WpThemeGetDynamicMethodReturnTypeExtension.php',
         'SzepeViktor\\PHPStan\\WordPress\\WpThemeMagicPropertiesClassReflectionExtension' => __DIR__ . '/..' . '/szepeviktor/phpstan-wordpress/src/WpThemeMagicPropertiesClassReflectionExtension.php',
-        'Tickera\\WalletPass\\Admin' => __DIR__ . '/../..' . '/includes/Admin.php',
-        'Tickera\\WalletPass\\Api' => __DIR__ . '/../..' . '/includes/Api.php',
-        'Tickera\\WalletPass\\Plugin' => __DIR__ . '/../..' . '/includes/Plugin.php',
         'UnhandledMatchError' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/UnhandledMatchError.php',
         'ValueError' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/ValueError.php',
         'WP_Dependency_Installer' => __DIR__ . '/..' . '/afragen/wp-dependency-installer/wp-dependency-installer.php',
