@@ -83,6 +83,24 @@ final class Admin {
 					<?php \submit_button(); ?>
 				</form>
 			</div>
+			<br>
+			<div style="margin-top:24px;padding:20px 24px;background:#fff;border-left:4px solid #FF6B00;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.1);display:flex;align-items:center;gap:20px;">
+				<div style="flex-shrink:0;width:40px;height:40px;background:#FF6B00;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+					<span style="color:#fff;font-size:22px;font-weight:700;line-height:1;">&#9889;</span>
+				</div>
+				<div>
+					<strong style="font-size:14px;color:#1d2327;"><?php \esc_html_e( 'Powered by CommerceBird — Premium Subscription Required', 'tcawp' ); ?></strong>
+					<p style="margin:4px 0 0;color:#50575e;font-size:13px;">
+						<?php
+							\printf(
+							/* translators: %s: CommerceBird link */
+								\esc_html__( 'This Wallet Pass feature is powered by %s. A Premium subscription is required for passes to be generated and delivered to your customers.', 'tcawp' ),
+								'<a href="https://commercebird.com" target="_blank" rel="noopener noreferrer" style="color:#FF6B00;font-weight:600;">CommerceBird</a>'
+							);
+						?>
+					</p>
+				</div>
+			</div>
 		</div>
 		<script>
 		jQuery(function($) {
