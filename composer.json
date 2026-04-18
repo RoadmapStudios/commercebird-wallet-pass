@@ -1,11 +1,11 @@
 {
-    "name": "tickera/walletpass",
-    "description": "Adds Apple & Android Wallet Pass for Tickera Event Plugin for WordPress",
+    "name": "commercebird/walletpass",
+    "description": "Adds Apple & Android Wallet Pass for Tickera Events Plugin for WooCommerce WordPress",
     "type": "wordpress-plugin",
     "license": "GPL-3.0-or-later",
     "autoload": {
         "psr-4": {
-            "Tickera\\WalletPass\\": "includes/"
+            "CommerceBird\\WalletPass\\": "includes/"
         },
         "classmap": []
     },
