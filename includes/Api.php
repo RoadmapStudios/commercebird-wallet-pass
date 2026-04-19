@@ -253,6 +253,14 @@ final class Api {
 		}
 	}
 
+	private static function iconToBase64( string $abs_path ): string {
+		if ( '' === $abs_path || ! file_exists( $abs_path ) ) {
+			return '';
+		}
+		$bytes = file_get_contents( $abs_path );
+		return ( false === $bytes ) ? '' : base64_encode( $bytes );
+	}
+
 	public static function invalidatePassCache( int $ticket_id ): void {
 		delete_post_meta( $ticket_id, self::PASS_URL_META_KEY );
 	}
@@ -278,7 +286,7 @@ final class Api {
 			'ticket_code'       => $ticket_code,
 			'first_name'        => $first_name,
 			'last_name'         => $last_name,
-			'icon_url'          => (string) ( $settings['icon_file'] ?? '' ),
+			'icon_data'         => self::iconToBase64( (string) ( $settings['icon_file_abs_path'] ?? '' ) ),
 			'logo_text'         => (string) ( $settings['logo_text'] ?? '' ),
 			'background_color'  => (string) ( $settings['background_color'] ?? '' ),
 			'organisation_name' => (string) ( $settings['organisation_name'] ?? '' ),
