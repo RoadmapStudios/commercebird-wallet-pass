@@ -162,6 +162,9 @@ final class Admin {
 
 		\update_option( self::OPTION_KEY, $settings );
 
+		// Icon/appearance changed — regenerate all cached passes on next view.
+		self::invalidateAllPassCaches();
+
 		return self::getSettings();
 	}
 
@@ -181,5 +184,21 @@ final class Admin {
 			),
 			$settings
 		);
+	}
+
+	private static function invalidateAllPassCaches(): void {
+		$ticket_ids = \get_posts( array(
+			'post_type'      => 'any',
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+			'meta_query'     => array( array(
+				'key'     => Api::PASS_URL_META_KEY,
+				'compare' => 'EXISTS',
+			) ),
+		) );
+
+		foreach ( (array) $ticket_ids as $ticket_id ) {
+			Api::invalidatePassCache( (int) $ticket_id );
+		}
 	}
 }

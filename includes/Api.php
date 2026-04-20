@@ -349,7 +349,7 @@ final class Api {
 			return;
 		}
 
-		$apple_badge = plugins_url( 'includes/add-to-apple-wallet.svg', dirname( __DIR__ ) . '/tickera-wallet-pass.php' );
+		$apple_badge = plugins_url( 'includes/add-to-apple-wallet.png', dirname( __DIR__ ) . '/tickera-wallet-pass.php' );
 		echo '<a href="' . esc_url( self::buildProxyUrl( $pass_url ) ) . '" rel="noopener noreferrer">'
 			. '<img src="' . esc_url( $apple_badge ) . '" width="100" alt="' . esc_attr__( 'Add to Apple Wallet', 'commercebird-wallet-pass' ) . '" />'
 			. '</a>';
