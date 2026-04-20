@@ -286,7 +286,7 @@ final class Api {
 			'ticket_code'       => $ticket_code,
 			'first_name'        => $first_name,
 			'last_name'         => $last_name,
-			'icon_data'         => self::iconToBase64( (string) ( $settings['icon_file_abs_path'] ?? '' ) ),
+			'icon_data'         => self::iconToBase64( (string) \get_attached_file( (int) ( $settings['icon_file_id'] ?? 0 ) ) ),
 			'logo_text'         => (string) ( $settings['logo_text'] ?? '' ),
 			'background_color'  => (string) ( $settings['background_color'] ?? '' ),
 			'organisation_name' => (string) ( $settings['organisation_name'] ?? '' ),
