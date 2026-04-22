@@ -286,7 +286,7 @@ final class Api {
 			'ticket_code'       => $ticket_code,
 			'first_name'        => $first_name,
 			'last_name'         => $last_name,
-			'icon_data'         => self::iconToBase64( (string) ( $settings['icon_file_abs_path'] ?? '' ) ),
+			'icon_data'         => self::iconToBase64( (string) \get_attached_file( (int) ( $settings['icon_file_id'] ?? 0 ) ) ),
 			'logo_text'         => (string) ( $settings['logo_text'] ?? '' ),
 			'background_color'  => (string) ( $settings['background_color'] ?? '' ),
 			'organisation_name' => (string) ( $settings['organisation_name'] ?? '' ),
@@ -349,7 +349,7 @@ final class Api {
 			return;
 		}
 
-		$apple_badge = plugins_url( 'includes/add-to-apple-wallet.svg', dirname( __DIR__ ) . '/tickera-wallet-pass.php' );
+		$apple_badge = plugins_url( 'includes/add-to-apple-wallet.png', dirname( __DIR__ ) . '/tickera-wallet-pass.php' );
 		echo '<a href="' . esc_url( self::buildProxyUrl( $pass_url ) ) . '" rel="noopener noreferrer">'
 			. '<img src="' . esc_url( $apple_badge ) . '" width="100" alt="' . esc_attr__( 'Add to Apple Wallet', 'commercebird-wallet-pass' ) . '" />'
 			. '</a>';
