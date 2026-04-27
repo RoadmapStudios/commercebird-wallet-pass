@@ -68,10 +68,10 @@ A: On the Thank You page after payment and in the email confirmation.
 3. Click on the "next steps" button to visit the my account page
 4. Open a new browser tab and connect your domain to our app on https://app.commercebird.com
 5. Create an application password as well via Settings > Application Password.
-5. Click on the Copy Token button on the main menu in the app.
-6. Go to your store's wp-admin menu > commercebird > paste the subscription id, token and your e-mail address and click save!
-7. Go to Tickera > Settings > Apple Wallet Pass > configure your Passes styling settings.
-8. That's all! Now you can test it by placing an event order via your iOS or Android device.
+6. Click on the Copy Token button on the main menu in the app.
+7. Go to your store's wp-admin menu > commercebird > paste the subscription id, token and your e-mail address and click save!
+8. Go to Tickera > Settings > Apple Wallet Pass > configure your Passes styling settings.
+9. That's all! Now you can test it by placing an event order via your iOS or Android device.
 
 == Screenshots ==
 1. Apple Wallet Settings in Tickera
