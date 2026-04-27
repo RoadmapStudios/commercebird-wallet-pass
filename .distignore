@@ -11,6 +11,7 @@
 .vscode
 .DS_Store
 .rsyncignore
+.claude
 tsconfig.json
 composer.lock
 package-lock.json

@@ -18,6 +18,35 @@ final class Admin {
 	public static function register(): void {
 		\add_filter( 'tc_settings_new_menus', array( self::class, 'addMenu' ) );
 		\add_action( 'tc_settings_menu_wallet', array( self::class, 'renderSettingsPage' ) );
+		\add_action( 'admin_enqueue_scripts', array( self::class, 'enqueueAdminAssets' ) );
+	}
+
+	public static function enqueueAdminAssets(): void {
+		if ( ! self::isWalletSettingsPage() ) {
+			return;
+		}
+
+		if ( \function_exists( 'wp_enqueue_media' ) ) {
+			\wp_enqueue_media();
+		}
+
+		\wp_enqueue_style( 'wp-color-picker' );
+
+		$script_args = true;
+		if ( \version_compare( \get_bloginfo( 'version' ), '6.3', '>=' ) ) {
+			$script_args = array(
+				'in_footer' => true,
+				'strategy'  => 'defer',
+			);
+		}
+
+		\wp_enqueue_script(
+			'commercebird-wallet-pass-admin',
+			\plugins_url( 'includes/admin.js', \dirname( __DIR__ ) . '/commercebird-wallet-pass.php' ),
+			array( 'jquery', 'wp-color-picker' ),
+			'1.0.0',
+			$script_args
+		);
 	}
 
 	public static function addMenu( array $menus ): array {
@@ -26,13 +55,6 @@ final class Admin {
 	}
 
 	public static function renderSettingsPage(): void {
-		if ( \function_exists( 'wp_enqueue_media' ) ) {
-			\wp_enqueue_media();
-		}
-
-		\wp_enqueue_style( 'wp-color-picker' );
-		\wp_enqueue_script( 'wp-color-picker' );
-
 		$settings = self::saveSettings();
 
 		if ( $settings === null ) {
@@ -109,31 +131,26 @@ final class Admin {
 				</div>
 			</div>
 		</div>
-		<script>
-		jQuery(function($) {
-			$('#upload_icon').on('click', function(e) {
-				e.preventDefault();
-
-				var frame = wp.media({
-					title: 'Choose Image',
-					button: { text: 'Choose Image' },
-					library: { type: 'image' },
-					multiple: false
-				});
-
-				frame.on('select', function() {
-					var attachment = frame.state().get('selection').first().toJSON();
-					$('#icon_file').val(attachment.url);
-					$('#icon_file_id').val(attachment.id);
-				});
-
-				frame.open();
-			});
-
-			$('.tc-color-picker').wpColorPicker();
-		});
-		</script>
 		<?php
+	}
+
+	private static function isWalletSettingsPage(): bool {
+		$page = \filter_input( INPUT_GET, 'page', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		$tab  = \filter_input( INPUT_GET, 'tab', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
+		if ( ! is_string( $page ) || '' === $page ) {
+			return false;
+		}
+
+		if ( false === \strpos( $page, 'tc' ) ) {
+			return false;
+		}
+
+		if ( ! is_string( $tab ) || '' === $tab ) {
+			return true;
+		}
+
+		return 'wallet' === $tab;
 	}
 
 	private static function saveSettings(): ?array {
@@ -187,15 +204,19 @@ final class Admin {
 	}
 
 	private static function invalidateAllPassCaches(): void {
-		$ticket_ids = \get_posts( array(
-			'post_type'      => 'any',
-			'posts_per_page' => -1,
-			'fields'         => 'ids',
-			'meta_query'     => array( array(
-				'key'     => Api::PASS_URL_META_KEY,
-				'compare' => 'EXISTS',
-			) ),
-		) );
+		$ticket_ids = \get_posts(
+			array(
+				'post_type'      => 'any',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'meta_query'     => array(
+					array(
+						'key'     => Api::PASS_URL_META_KEY,
+						'compare' => 'EXISTS',
+					),
+				),
+			)
+		);
 
 		foreach ( (array) $ticket_ids as $ticket_id ) {
 			Api::invalidatePassCache( (int) $ticket_id );
