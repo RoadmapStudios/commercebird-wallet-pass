@@ -12,17 +12,17 @@ Automatically generate Apple Passes for Tickera via our Plug&Play CommerceBird P
 
 == Description ==
 
-= The Must-Have Wallet Pass Add-On for Tickera Events =
+= Wallet Pass Add-On for Tickera Events =
 
-CommerceBird Wallet Pass for Tickera transforms your Tickera events into premium mobile wallet experiences. Sell more tickets and boost event attendance with one-click Apple Wallet and Android Wallet pass delivery for every ticket purchase.
+CommerceBird Wallet Pass for Tickera adds Apple Wallet and Android Wallet pass delivery for Tickera ticket purchases.
 
-= Why Tickera Event Organizers Need This Plugin =
+= What This Plugin Does =
 
-If you run Tickera-powered events, this add-on is essential. It instantly generates secure mobile passes for your attendees, improves check-in speed, reduces ticket fraud, and gives ticket buyers the modern mobile wallet convenience they expect.
+For Tickera-powered events, this add-on generates mobile passes for attendees and provides wallet download links after purchase.
 
-= Built for Event Ticketing, Optimized for Mobile Wallets =
+= Built for Event Ticketing and Mobile Wallets =
 
-This plugin is the definitive Tickera extension for:
+This plugin includes:
 
 - Apple Wallet pass generation for iPhone and iPad
 - Android Wallet compatibility for Google Wallet users
@@ -30,20 +30,20 @@ This plugin is the definitive Tickera extension for:
 - Faster event entry and better attendee satisfaction
 - Secure pass URLs and modern digital ticket workflows
 
-= Features That Make It a Game Changer =
+= Features =
 
 Instant Wallet Pass Downloads — deliver Apple Wallet and Android Wallet passes immediately after checkout
 Tickera Native Integration — works directly with Tickera Events and WooCommerce ticket flows
 Mobile Wallet Ready — support for both Apple Wallet and Android mobile ticketing
 Improved Event Experience — attendees store tickets in their wallet app instead of email
 Simple Setup — install, activate, and configure in minutes for Tickera event tickets
-= The Best Add-On for Tickera Event Tickets =
+= Tickera Event Ticket Support =
 
-This is not just another plugin — it’s the essential Tickera wallet pass extension that turns ordinary event tickets into premium digital passes. If you want smarter mobile ticketing, better customer experience, and a modern event check-in workflow, this add-on is a must-have.
+This add-on extends Tickera ticket delivery by adding wallet pass options for supported devices.
 
-= Make Your Tickera Events Wallet-Friendly =
+= Wallet-Friendly Tickera Events =
 
-Empower your event attendees with mobile wallet passes, reduce friction at the door, and position your Tickera events for the future of ticketing.
+Attendees can store supported tickets in their mobile wallet app and access them from the Thank You page and email confirmation.
 
 == Frequently Asked Questions ==
 
@@ -67,10 +67,11 @@ A: On the Thank You page after payment and in the email confirmation.
 2. Go to https://commercebird.com/pricing and subscribe to the Premium plan trial
 3. Click on the "next steps" button to visit the my account page
 4. Open a new browser tab and connect your domain to our app on https://app.commercebird.com
-5. Click on the Copy Token button
-6. Go to your store's wp-admin menu > commercebird > paste the subscription id, token and your e-mail address and click save!
-7. Go to Tickera > Settings > Apple Wallet Pass > configure your Passes styling settings.
-8. That's all! Now you can test it by placing an event order via your iOS or Android device.
+5. Create an application password as well via Settings > Application Password.
+6. Click on the Copy Token button on the main menu in the app.
+7. Go to your store's wp-admin menu > commercebird > paste the subscription id, token and your e-mail address and click save!
+8. Go to Tickera > Settings > Apple Wallet Pass > configure your Passes styling settings.
+9. That's all! Now you can test it by placing an event order via your iOS or Android device.
 
 == Screenshots ==
 1. Apple Wallet Settings in Tickera
