@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class Plugin {
 
-	private const CRON_HOOK = 'tc_wallet_cleanup_expired_passes';
+	private const CRON_HOOK = 'cmbird_wallet_cleanup_expired_passes';
 
 	public static function bootstrap(): void {
 		Admin::register();
@@ -140,7 +140,7 @@ final class Plugin {
 		}
 	}
 
-	public static function wpass_set_apple_mime_type(): void {
+	public static function cmbird_set_apple_mime_type(): void {
 		if ( ! \function_exists( 'insert_with_markers' ) && \defined( 'ABSPATH' ) ) {
 			require_once \ABSPATH . 'wp-admin/includes/misc.php';
 		}
