@@ -6,7 +6,7 @@
  * Author: CommerceBird
  * Requires PHP: 8.2
  * Requires Plugins: commercebird, woocommerce
- * Requires at least: 6.5
+ * Requires at least: 6.8
  * Version: 1.0.0
  * License: GNU General Public License v3.0
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -24,15 +24,15 @@ if ( class_exists( Plugin::class ) ) {
 	Plugin::bootstrap();
 }
 
-if ( ! function_exists( 'commercebird_wallet_pass_set_apple_mime_type' ) ) {
-	function commercebird_wallet_pass_set_apple_mime_type() {
+if ( ! function_exists( 'cmbird_wallet_pass_set_apple_mime_type' ) ) {
+	function cmbird_wallet_pass_set_apple_mime_type() {
 		if ( class_exists( Plugin::class ) ) {
-			Plugin::wpass_set_apple_mime_type();
+			Plugin::cmbird_set_apple_mime_type();
 		}
 	}
 }
 
-register_activation_hook( __FILE__, 'commercebird_wallet_pass_set_apple_mime_type' );
+register_activation_hook( __FILE__, 'cmbird_wallet_pass_set_apple_mime_type' );
 
 if ( class_exists( Plugin::class ) && method_exists( Plugin::class, 'scheduleCleanup' ) ) {
 	register_activation_hook( __FILE__, array( Plugin::class, 'scheduleCleanup' ) );

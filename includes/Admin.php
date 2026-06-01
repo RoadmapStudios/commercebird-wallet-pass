@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 final class Admin {
 
-	private const OPTION_KEY = 'tc_apple_wallet_settings';
+	private const OPTION_KEY = 'cmbird_apple_wallet_settings';
 
 	public static function register(): void {
 		\add_filter( 'tc_settings_new_menus', array( self::class, 'addMenu' ) );

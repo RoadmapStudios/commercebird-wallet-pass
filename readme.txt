@@ -2,7 +2,7 @@
 Contributors: fawadinho
 Author link: https://commercebird.com
 Tags: woocommerce,apple,wallet,tickets,events
-Requires at least: 6.5
+Requires at least: 6.8
 Tested up to: 6.9
 Requires PHP: 8.2
 Stable tag: 1.0.0
@@ -45,6 +45,12 @@ This add-on extends Tickera ticket delivery by adding wallet pass options for su
 
 Attendees can store supported tickets in their mobile wallet app and access them from the Thank You page and email confirmation.
 
+== External services ==
+
+This plugin connects to an API to generate the passes, it's needed to save the passes in the WP media library and make it available on the Order confirmation page as well as the Order confirmation template.
+It sends the event's information as well as the ticket id to generate the pass. No personal data is sent.
+This service is provided by "CommerceBird":  [TOS](https://commercebird.com/terms-conditions) and [Privacy Policy](https://commercebird.com/privacy-policy)
+
 == Frequently Asked Questions ==
 
 = Q: Do I need a paid plan to use this plugin? =
@@ -64,11 +70,11 @@ A: On the Thank You page after payment and in the email confirmation.
 **To install CommerceBird - Wallet Pass for Tickera, follow these steps:**
 
 1. Download and activate the CommerceBird plugin (Main plugin)
-2. Go to https://commercebird.com/pricing and subscribe to the Premium plan trial
+2. Go to [CommerceBird.com](https://commercebird.com/pricing) and subscribe to the Premium plan trial
 3. Click on the "next steps" button to visit the my account page
-4. Open a new browser tab and connect your domain to our app on https://app.commercebird.com
+4. Open a new browser tab and connect your domain to our [App](https://app.commercebird.com)
 5. Create an application password as well via Settings > Application Password.
-6. Click on the Copy Token button on the main menu in the app.
+6. Click on the "Copy Token" button via the main menu in the app.
 7. Go to your store's wp-admin menu > commercebird > paste the subscription id, token and your e-mail address and click save!
 8. Go to Tickera > Settings > Apple Wallet Pass > configure your Passes styling settings.
 9. That's all! Now you can test it by placing an event order via your iOS or Android device.

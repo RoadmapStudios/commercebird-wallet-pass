@@ -208,6 +208,11 @@ final class Api {
 			return;
 		}
 
+		// if class TC_Orders doesn't exist, it means Tickera isn't active, so skip.
+		if ( ! class_exists( '\Tickera\TC_Orders' ) ) {
+			return;
+		}
+
 		$order_attendees = \Tickera\TC_Orders::get_tickets_ids( $order->get_id() );
 		if ( empty( $order_attendees ) ) {
 			return;
