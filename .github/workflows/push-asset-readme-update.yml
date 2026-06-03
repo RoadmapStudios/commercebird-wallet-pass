@@ -1,0 +1,20 @@
+name: Plugin asset/readme update
+on:
+  push:
+    branches:
+    - main
+    paths:
+      - ".wordpress-org/**"  # Trigger only if files in .wordpress-org change
+      - "readme.txt"         # Also trigger if the plugin readme changes
+  workflow_dispatch: # Allows manual trigger
+jobs:
+  master:
+    name: Push to main
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: WordPress.org plugin asset/readme update
+      uses: 10up/action-wordpress-plugin-asset-update@stable
+      env:
+        SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+        SVN_USERNAME: ${{ secrets.SVN_USERNAME }}

@@ -1,0 +1,54 @@
+name: Deploy to WordPress.org
+on:
+  push:
+    tags:
+      - "*" # Trigger on new tag push
+  workflow_dispatch: # Allows manual trigger
+jobs:
+  tag:
+    name: New tag
+    if: github.event.head_commit.message != 'Merge branch ''dev'' into main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@master
+        with:
+          fetch-depth: 0 # Ensure all tags are fetched
+          ref: ${{ github.ref }}
+
+      - name: Get Tag Name
+        id: get_tag
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+          else
+            echo "Fetching latest release tag from GitHub API..."
+            gh auth login --with-token <<< "${{ secrets.GITHUB_TOKEN }}"
+            TAG_FROM_GH=$(gh api repos/${{ github.repository }}/releases/latest --jq .tag_name)
+            echo "TAG_NAME=$TAG_FROM_GH" >> $GITHUB_ENV
+          fi
+
+      - name: Debug Tag Name
+        run: "echo 'Deploying tag: $TAG_NAME'"
+
+      - name: Install Node.js and npm
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Install npm dependencies
+        run: npm install -g vite
+
+      - name: Make build script executable
+        run: chmod +x build-ubuntu.sh
+
+      - name: Run Build Script
+        run: ./build-ubuntu.sh
+
+      - name: Deploy to WordPress.org
+        uses: nk-o/action-wordpress-plugin-deploy@master
+        env:
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          SOURCE_DIR: build-zip/commercebird-wallet-pass/
+          SLUG: commercebird-wallet-pass
