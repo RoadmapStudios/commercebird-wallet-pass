@@ -82,8 +82,7 @@ A: On the Thank You page after payment and in the email confirmation.
 == Screenshots ==
 1. Apple Wallet Settings in Tickera
 2. Thankyou page to download the passes
-3. CommerceBird welcome page plugin
 
 == Changelog ==
-= 1.0.0 - 30 April 2026 =
-* Out of beta - initial release
+= 1.0.0 - 3 May 2026 =
+* Initial Release
