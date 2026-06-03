@@ -1,0 +1,56 @@
+name: Static Analysis
+
+on:
+  pull_request:
+    branches: [ main, development ]
+
+jobs:
+  phpstan:
+    name: PHPStan Analysis
+    runs-on: ubuntu-latest
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        php-versions: ['8.2', '8.3']
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php-versions }}
+        extensions: curl, json, mbstring
+        tools: composer:v2
+        coverage: none
+
+    - name: Get composer cache directory
+      id: composer-cache
+      run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: ${{ steps.composer-cache.outputs.dir }}
+        key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+        restore-keys: ${{ runner.os }}-composer-
+    
+    - name: Install dependencies
+      run: composer update
+
+    - name: Validate composer.json and composer.lock
+      run: composer validate
+        
+    - name: Dump autoload
+      run: composer dump-autoload --optimize
+
+    - name: Check syntax
+      run: find includes admin -name '*.php' | xargs -n 1 -P4 php -l
+    
+    - name: Run PHPStan
+      run: vendor/bin/phpstan analyse --memory-limit=2G --configuration=phpstan-ci.neon.dist --no-progress
+    
+    # - name: Run PHPCS
+      # run: composer run-script phpcs
