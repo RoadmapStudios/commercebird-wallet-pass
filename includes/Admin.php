@@ -70,19 +70,15 @@ final class Admin {
 						<div class="inside">
 							<table class="form-table">
 								<tbody>
-									<?php if ( ! empty( $settings['icon_file'] ) ) : ?>
-									<tr>
-										<th scope="row">&nbsp;</th>
-										<td><img src="<?php echo \esc_url( $settings['icon_file'] ); ?>" width="100" alt="" /></td>
-									</tr>
-									<?php endif; ?>
 									<tr>
 										<th scope="row"><label for="icon_file"><?php \esc_html_e( 'Icon File', 'commercebird-wallet-pass' ); ?></label></th>
 										<td>
 											<input type="hidden" name="icon_file_id" id="icon_file_id" value="<?php echo \esc_attr( (string) $settings['icon_file_id'] ); ?>" />
-											<input name="icon_file" type="text" id="icon_file" value="<?php echo \esc_attr( $settings['icon_file'] ); ?>" class="regular-text" />
+											<input type="hidden" name="icon_file" id="icon_file" value="<?php echo \esc_attr( $settings['icon_file'] ); ?>" />
 											<input type="button" id="upload_icon" value="Choose File" class="button" />
-											<p class="description"><?php \esc_html_e( 'Icon image URL', 'commercebird-wallet-pass' ); ?></p>
+											<div id="icon_file_preview" style="margin-top:12px;<?php echo empty( $settings['icon_file'] ) ? 'display:none;' : ''; ?>">
+												<img id="icon_file_preview_image" src="<?php echo \esc_url( $settings['icon_file'] ); ?>" width="100" alt="" style="max-width:100px;height:auto;display:block;" />
+											</div>
 										</td>
 									</tr>
 									<tr>
@@ -112,8 +108,7 @@ final class Admin {
 					<?php \submit_button(); ?>
 				</form>
 			</div>
-			<br>
-			<div style="margin-top:24px;padding:20px 24px;background:#fff;border-left:4px solid #FF6B00;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.1);display:flex;align-items:center;gap:20px;">
+			<div style="clear:both;margin-top:24px;padding:20px 24px;background:#fff;border-left:4px solid #FF6B00;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.1);display:flex;align-items:center;gap:20px;width:100%;box-sizing:border-box;">
 				<div style="flex-shrink:0;width:40px;height:40px;background:#FF6B00;border-radius:50%;display:flex;align-items:center;justify-content:center;">
 					<span style="color:#fff;font-size:22px;font-weight:700;line-height:1;">&#9889;</span>
 				</div>
