@@ -32,6 +32,7 @@ vendor/
 
 bin/
 svn-tags/
+assets/
 commercebird-wallet-pass.zip
 build-zip/
 build-mac.sh
