@@ -2,7 +2,7 @@ name: Static Analysis
 
 on:
   pull_request:
-    branches: [ main, development ]
+    branches: [ master, development ]
 
 jobs:
   phpstan:
