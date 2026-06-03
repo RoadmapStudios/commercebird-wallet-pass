@@ -13,6 +13,14 @@ jQuery(function ($) {
       var attachment = frame.state().get("selection").first().toJSON();
       $("#icon_file").val(attachment.url);
       $("#icon_file_id").val(attachment.id);
+
+      var $preview = $("#icon_file_preview");
+      var $previewImage = $("#icon_file_preview_image");
+
+      if ($preview.length && $previewImage.length) {
+        $previewImage.attr("src", attachment.url);
+        $preview.show();
+      }
     });
 
     frame.open();
