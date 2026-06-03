@@ -2,14 +2,14 @@ name: Plugin asset/readme update
 on:
   push:
     branches:
-    - main
+    - master
     paths:
       - ".wordpress-org/**"  # Trigger only if files in .wordpress-org change
       - "readme.txt"         # Also trigger if the plugin readme changes
   workflow_dispatch: # Allows manual trigger
 jobs:
   master:
-    name: Push to main
+    name: Push to master
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
