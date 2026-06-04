@@ -14,7 +14,7 @@ parameters:
     # Exclude problematic paths
     excludePaths:
         - vendor/
-        - build/
+        - build-zip/
     
     # Minimal ignore patterns for CI
     ignoreErrors:
