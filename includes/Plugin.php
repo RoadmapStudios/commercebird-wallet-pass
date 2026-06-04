@@ -53,7 +53,7 @@ final class Plugin {
 		// Fetch all ticket posts that have a cached pass URL.
 		$ticket_ids = \get_posts(
 			array(
-				'post_type'      => 'any',
+				'post_type'      => 'tc_tickets_instances',
 				'posts_per_page' => -1,
 				'fields'         => 'ids',
 				'meta_query'     => array(
@@ -123,7 +123,7 @@ final class Plugin {
 
 		$ticket_ids = \get_posts(
 			array(
-				'post_type'      => 'any',
+				'post_type'      => 'tc_tickets_instances',
 				'posts_per_page' => -1,
 				'fields'         => 'ids',
 				'meta_query'     => array(
