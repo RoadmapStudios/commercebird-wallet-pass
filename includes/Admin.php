@@ -108,6 +108,7 @@ final class Admin {
 					<?php \submit_button(); ?>
 				</form>
 			</div>
+			<br>
 			<div style="clear:both;margin-top:24px;padding:20px 24px;background:#fff;border-left:4px solid #FF6B00;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.1);display:flex;align-items:center;gap:20px;width:100%;box-sizing:border-box;">
 				<div style="flex-shrink:0;width:40px;height:40px;background:#FF6B00;border-radius:50%;display:flex;align-items:center;justify-content:center;">
 					<span style="color:#fff;font-size:22px;font-weight:700;line-height:1;">&#9889;</span>
