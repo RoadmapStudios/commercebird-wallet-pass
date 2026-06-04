@@ -38,6 +38,13 @@ rsync -av --exclude-from=".distignore" . "$DEST_PATH/"
 # Install PHP dependencies
 progress_message "Installing PHP dependencies..."
 composer install --working-dir="$DEST_PATH" --no-dev --optimize-autoloader
+
+# Verify vendor install succeeded before continuing
+if [ ! -f "$DEST_PATH/vendor/autoload.php" ]; then
+  echo "Error: Composer dependencies were not installed. Expected file not found: $DEST_PATH/vendor/autoload.php"
+  exit 1
+fi
+
 rm "$DEST_PATH/composer.lock"
 
 # Add index.php to every directory (excluding vendor, which is blocked via .htaccess)
