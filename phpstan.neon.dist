@@ -14,7 +14,6 @@ parameters:
     # Exclude problematic paths
     excludePaths:
         - vendor/
-        - build-zip/
     
     # Ignore common WordPress patterns that PHPStan doesn't understand
     ignoreErrors:

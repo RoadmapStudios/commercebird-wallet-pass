@@ -14,8 +14,7 @@ parameters:
     # Exclude problematic paths
     excludePaths:
         - vendor/
-        - build-zip/
-    
+
     # Minimal ignore patterns for CI
     ignoreErrors:
         # WordPress globals are dynamically defined
