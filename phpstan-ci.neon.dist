@@ -14,8 +14,7 @@ parameters:
     # Exclude problematic paths
     excludePaths:
         - vendor/
-        - build/
-    
+
     # Minimal ignore patterns for CI
     ignoreErrors:
         # WordPress globals are dynamically defined
@@ -40,9 +39,11 @@ parameters:
         
         # WooCommerce functions
         - '#^Function (wc_get_order|wc_get_product|WC|woocommerce_get_template)\(\) not found\.$#'
-    
-    # Report unused variables and parameters
-    reportUnmatchedIgnoredErrors: false
+
+        # Action Scheduler functions/constants
         - '#^Function as_get_scheduled_action not found\.$#'
         - '#^Function as_unschedule_action not found\.$#'
         - '#^Access to constant STATUS_PENDING on an unknown class ActionScheduler_Store\.$#'
+    
+    # Report unused variables and parameters
+    reportUnmatchedIgnoredErrors: false
