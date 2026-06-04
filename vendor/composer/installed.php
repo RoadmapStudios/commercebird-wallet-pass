@@ -3,7 +3,7 @@
         'name' => 'commercebird/walletpass',
         'pretty_version' => 'dev-master',
         'version' => 'dev-master',
-        'reference' => 'c475393280853208b26bf86d51c7340f057a3e01',
+        'reference' => '6325909a323bc4f7b95d6ba5b4208f3f52a73972',
         'type' => 'wordpress-plugin',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -31,7 +31,7 @@
         'commercebird/walletpass' => array(
             'pretty_version' => 'dev-master',
             'version' => 'dev-master',
-            'reference' => 'c475393280853208b26bf86d51c7340f057a3e01',
+            'reference' => '6325909a323bc4f7b95d6ba5b4208f3f52a73972',
             'type' => 'wordpress-plugin',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
