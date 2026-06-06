@@ -5,7 +5,7 @@ Tags: woocommerce,apple,wallet,tickets,events
 Requires at least: 6.8
 Tested up to: 7.0
 Requires PHP: 8.2
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 Automatically generate Apple Passes for Tickera via our Plug&Play CommerceBird Platform.
@@ -32,11 +32,12 @@ This plugin includes:
 
 = Features =
 
-Instant Wallet Pass Downloads — deliver Apple Wallet and Android Wallet passes immediately after checkout
-Tickera Native Integration — works directly with Tickera Events and WooCommerce ticket flows
-Mobile Wallet Ready — support for both Apple Wallet and Android mobile ticketing
-Improved Event Experience — attendees store tickets in their wallet app instead of email
-Simple Setup — install, activate, and configure in minutes for Tickera event tickets
+1. Instant Wallet Pass Downloads — deliver Apple Wallet and Android Wallet passes immediately after checkout
+2. Tickera Native Integration — works directly with Tickera Events and WooCommerce ticket flows
+3. Mobile Wallet Ready — support for both Apple Wallet and Android mobile ticketing
+4. Improved Event Experience — attendees store tickets in their wallet app instead of email
+5. Simple Setup — install, activate, and configure in minutes for Tickera event tickets
+
 = Tickera Event Ticket Support =
 
 This add-on extends Tickera ticket delivery by adding wallet pass options for supported devices.
@@ -54,7 +55,8 @@ This service is provided by "CommerceBird":  [TOS](https://commercebird.com/term
 == Frequently Asked Questions ==
 
 = Q: Do I need a paid plan to use this plugin? =
-A: Yes, you need a Premium plan at commercebird.com and the main commercebird plugin.
+A: Yes, you need a Premium plan at commercebird.com and the main commercebird plugin. 
+In addition, you also need the Bundle plan of Tickera as this solution requires the Bridge for WooCommerce add-on.
 
 = Q: How quickly and easy can I set this up? =
 A: Very easy, all you need is to follow the installation steps and you can be done in 5 minutes.
@@ -84,6 +86,9 @@ A: On the Thank You page after payment and in the email confirmation.
 2. Thankyou page to download the passes
 
 == Changelog ==
+= 1.0.3 - 6 May 2026 =
+* Fix: add to wallet image in Woo email confirmation not loading
+
 = 1.0.2 - 4 May 2026 =
 * Fix: empty vendor folder caused fatal error
 

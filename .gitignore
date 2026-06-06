@@ -16,9 +16,14 @@ assets/
 
 # Allow composer subfolder and autoload.php
 !vendor/composer/
-!vendor/composer/*
 !vendor/autoload.php
 !vendor/phpstan/
+!vendor/afragen/
+!vendor/autoload_packages.php
+!vendor/automattic/
+!vendor/jetpack-autoloader/
+!vendor/wordpress/
+!vendor/index.php
 
 # PHPStan files
 phpstan.neon

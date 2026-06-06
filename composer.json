@@ -23,7 +23,7 @@
         "afragen/wp-dependency-installer": "^4.3.14"
     },
     "require-dev": {
-        "dealerdirect/phpcodesniffer-composer-installer": "^1.2.0",
+        "dealerdirect/phpcodesniffer-composer-installer": "^1.2.1",
         "filp/whoops": ">=2.18.4",
         "php-stubs/woocommerce-stubs": "dev-master",
         "php-stubs/wordpress-stubs": "^6.9.4",
@@ -31,8 +31,7 @@
         "phpcsstandards/phpcsutils": "^1.2.2",
         "phpstan/extension-installer": "^1.4.3",
         "phpstan/phpstan": "^2.2.1",
-        "roots/wordpress-no-content": ">=7.0.0",
-        "squizlabs/php_codesniffer": "^3.13.5",
+        "roots/wordpress-no-content": ">=7.0",
         "symfony/var-dumper": "^5.4.48",
         "szepeviktor/phpstan-wordpress": "^2.0.3",
         "wp-coding-standards/wpcs": "^3.3.0"
