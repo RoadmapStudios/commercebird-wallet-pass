@@ -248,7 +248,7 @@ final class Api {
 			return;
 		}
 
-		$apple_badge = plugins_url( 'includes/add-to-apple-wallet.jpg', dirname( __DIR__ ) . '/tickera-wallet-pass.php' );
+		$apple_badge = plugins_url( 'includes/add-to-apple-wallet.png', dirname( __DIR__ ) . '/tickera-wallet-pass.php' );
 		echo '<h2 style="color:#333;font-family:inherit;">' . esc_html__( 'Your Wallet Passes', 'commercebird-wallet-pass' ) . '</h2>';
 		foreach ( $passes as $pass ) {
 			echo '<p>';
