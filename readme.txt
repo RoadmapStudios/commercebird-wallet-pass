@@ -54,7 +54,8 @@ This service is provided by "CommerceBird":  [TOS](https://commercebird.com/term
 == Frequently Asked Questions ==
 
 = Q: Do I need a paid plan to use this plugin? =
-A: Yes, you need a Premium plan at commercebird.com and the main commercebird plugin.
+A: Yes, you need a Premium plan at commercebird.com and the main commercebird plugin. 
+In addition, you also need the Bundle plan of Tickera as this solution requires the Bridge for WooCommerce add-on.
 
 = Q: How quickly and easy can I set this up? =
 A: Very easy, all you need is to follow the installation steps and you can be done in 5 minutes.
