@@ -13,6 +13,8 @@ wp-content/wp-cache-config.php
 wp-content/plugins/hello.php
 vendor/*
 assets/
+tags/
+trunk/
 
 # Allow composer subfolder and autoload.php
 !vendor/composer/
