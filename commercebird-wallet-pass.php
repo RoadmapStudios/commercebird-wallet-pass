@@ -5,9 +5,9 @@
  * Description: Adds Apple & Android Wallet Pass for Tickera Event Tickets for WooCommerce WordPress.
  * Author: CommerceBird
  * Requires PHP: 8.2
- * Requires Plugins: commercebird, woocommerce
- * Requires at least: 6.8
- * Version: 1.0.3
+ * Requires Plugins: commercebird, tickera-event-ticketing-system
+ * Requires at least: 7.0
+ * Version: 1.0.4
  * License: GNU General Public License v3.0
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  */
@@ -40,4 +40,15 @@ if ( class_exists( Plugin::class ) && method_exists( Plugin::class, 'scheduleCle
 
 if ( class_exists( Plugin::class ) && method_exists( Plugin::class, 'clearCleanupSchedule' ) ) {
 	register_deactivation_hook( __FILE__, array( Plugin::class, 'clearCleanupSchedule' ) );
+}
+
+/**
+ * Set pkpass mime type using WP Filter.
+ *
+ * @since 1.0.0
+ */
+add_filter( 'mime_types', 'cmbird_wallet_pass_add_pkpass_mime_type' );
+function cmbird_wallet_pass_add_pkpass_mime_type( $wp_get_mime_types ) {
+	$wp_get_mime_types['pkpass'] = 'application/vnd.apple.pkpass';
+	return $wp_get_mime_types;
 }
