@@ -5,9 +5,9 @@
  * Description: Adds Apple & Android Wallet Pass for Tickera Event Tickets for WooCommerce WordPress.
  * Author: CommerceBird
  * Requires PHP: 8.2
- * Requires Plugins: commercebird, woocommerce
- * Requires at least: 6.8
- * Version: 1.0.3
+ * Requires Plugins: commercebird, tickera-event-ticketing-system
+ * Requires at least: 7.0
+ * Version: 1.0.4
  * License: GNU General Public License v3.0
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  */
