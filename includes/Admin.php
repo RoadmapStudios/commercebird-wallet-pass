@@ -63,6 +63,7 @@ final class Admin {
 
 		?>
 		<div class="wrap tc_wrap">
+			<?php self::renderApplicationPasswordWarning(); ?>
 			<div id="poststuff">
 				<form action="" method="post">
 					<div class="postbox">
@@ -197,6 +198,47 @@ final class Admin {
 			),
 			$settings
 		);
+	}
+
+	private static function renderApplicationPasswordWarning(): void {
+		if ( self::hasCommerceBirdApplicationPassword() ) {
+			return;
+		}
+
+		$profile_url = 'https://app.commercebird.com';
+		?>
+		<div class="notice notice-warning inline" style="margin-bottom:20px;">
+			<p><strong><?php \esc_html_e( 'CommerceBird application password is missing.', 'commercebird-wallet-pass' ); ?></strong></p>
+			<p><?php \esc_html_e( 'Create an application password via the CommerceBird App Settings to enable Wallet Pass API access.', 'commercebird-wallet-pass' ); ?></p>
+			<p><a href="<?php echo \esc_url( $profile_url ); ?>" target="_blank"><?php \esc_html_e( 'Edit your profile', 'commercebird-wallet-pass' ); ?></a></p>
+		</div>
+		<?php
+	}
+
+	private static function hasCommerceBirdApplicationPassword(): bool {
+		$passwords = array();
+
+		if ( \class_exists( 'WP_Application_Passwords' ) && \is_callable( array( 'WP_Application_Passwords', 'get_user_application_passwords' ) ) ) {
+			$passwords = \WP_Application_Passwords::get_user_application_passwords( \get_current_user_id() );
+		} elseif ( \function_exists( 'get_user_application_passwords' ) ) {
+			$passwords = \get_user_application_passwords( \get_current_user_id() );
+		}
+
+		if ( ! is_array( $passwords ) ) {
+			return false;
+		}
+
+		foreach ( $passwords as $password ) {
+			if ( ! is_array( $password ) || ! isset( $password['name'] ) ) {
+				continue;
+			}
+
+			if ( 'CommerceBird' === $password['name'] ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private static function invalidateAllPassCaches(): void {

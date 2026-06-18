@@ -7,6 +7,7 @@ With this amazing add-on, you can now enable Apple and Android Wallet for your c
 ## How to install
 *Android: no configuration needed for Android.
 *Requirement: subscription at CommerceBird.com
+
 1. Install the CommerceBird plugin first as this is an add-on to it.
 2. Connect your site to CommerceBird to our app on app.commercebird.com.
 3. Generate Application Password via the App settings.

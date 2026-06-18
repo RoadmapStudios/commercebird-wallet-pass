@@ -28,11 +28,14 @@ phpstan.neon.dist
 phpstan-ci.neon.dist
 phpstan-minimal.neon.dist
 stubs/
+tags/
+trunk/
 
 bin/
 svn-tags/
 assets/
 commercebird-wallet-pass.zip
+commercebird-wallet-pass/
 build-zip/
 build-mac.sh
 build-ubuntu.sh
