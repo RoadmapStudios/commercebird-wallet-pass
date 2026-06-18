@@ -41,3 +41,14 @@ if ( class_exists( Plugin::class ) && method_exists( Plugin::class, 'scheduleCle
 if ( class_exists( Plugin::class ) && method_exists( Plugin::class, 'clearCleanupSchedule' ) ) {
 	register_deactivation_hook( __FILE__, array( Plugin::class, 'clearCleanupSchedule' ) );
 }
+
+/**
+ * Set pkpass mime type using WP Filter.
+ *
+ * @since 1.0.0
+ */
+add_filter( 'mime_types', 'cmbird_wallet_pass_add_pkpass_mime_type' );
+function cmbird_wallet_pass_add_pkpass_mime_type( $wp_get_mime_types ) {
+	$wp_get_mime_types['pkpass'] = 'application/vnd.apple.pkpass';
+	return $wp_get_mime_types;
+}
