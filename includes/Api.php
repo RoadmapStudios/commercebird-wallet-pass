@@ -258,12 +258,94 @@ final class Api {
 		}
 	}
 
+	/**
+	 * Largest icon payload the API accepts, in base64 characters.
+	 * Base64 inflates by 4/3, so this is roughly 500 KB of image data.
+	 */
+	private const MAX_ICON_BASE64_LENGTH = 700000;
+
 	private static function iconToBase64( string $abs_path ): string {
 		if ( '' === $abs_path || ! file_exists( $abs_path ) ) {
 			return '';
 		}
 		$bytes = file_get_contents( $abs_path );
 		return ( false === $bytes ) ? '' : base64_encode( $bytes );
+	}
+
+	/**
+	 * Resolves the pass artwork to a PNG small enough for the API.
+	 *
+	 * get_attached_file() hands back the full-size original, which for a typical
+	 * logo upload is far larger than the request budget and gets the whole pass
+	 * rejected. Registered intermediate sizes are tried first, largest to
+	 * smallest, and only a PNG is returned — Apple will not render anything else
+	 * as icon.png.
+	 *
+	 * @param int $attachment_id Media library ID of the configured icon.
+	 * @return string Base64-encoded PNG, or '' to let the API use its default.
+	 */
+	private static function resolveIconData( int $attachment_id ): string {
+		if ( $attachment_id <= 0 ) {
+			return '';
+		}
+
+		if ( 'image/png' !== \get_post_mime_type( $attachment_id ) ) {
+			return '';
+		}
+
+		$upload_dir = \wp_get_upload_dir();
+		$base_dir   = isset( $upload_dir['basedir'] ) ? (string) $upload_dir['basedir'] : '';
+		$candidates = array();
+
+		// Wallet icons top out at 87x87 (29pt @3x); anything larger is wasted bytes.
+		foreach ( array( 'medium', 'thumbnail' ) as $size ) {
+			$intermediate = \image_get_intermediate_size( $attachment_id, $size );
+			if ( is_array( $intermediate ) && ! empty( $intermediate['path'] ) && '' !== $base_dir ) {
+				$candidates[] = $base_dir . '/' . $intermediate['path'];
+			}
+		}
+
+		$candidates[] = (string) \get_attached_file( $attachment_id );
+
+		foreach ( $candidates as $candidate ) {
+			$encoded = self::iconToBase64( $candidate );
+			if ( '' !== $encoded && strlen( $encoded ) <= self::MAX_ICON_BASE64_LENGTH ) {
+				return $encoded;
+			}
+		}
+
+		if ( class_exists( 'WC_Logger' ) ) {
+			wc_get_logger()->warning(
+				'Wallet Pass icon is too large to send; the default icon will be used. Upload a PNG of about 87x87 pixels.',
+				array( 'source' => 'commercebird-wallet-pass' )
+			);
+		}
+
+		return '';
+	}
+
+	/**
+	 * Normalises a colour-picker value to #rrggbb.
+	 *
+	 * Anything the API cannot parse silently degrades the pass to the default
+	 * grey, so shorthand and unhashed values are expanded here.
+	 *
+	 * @param string $color    Raw value from the colour picker.
+	 * @param string $fallback Colour to use when $color cannot be parsed.
+	 * @return string Colour as #rrggbb.
+	 */
+	private static function normalizeHexColor( string $color, string $fallback = '#aaaaaa' ): string {
+		$value = ltrim( trim( $color ), '#' );
+
+		if ( 3 === strlen( $value ) && ctype_xdigit( $value ) ) {
+			$value = $value[0] . $value[0] . $value[1] . $value[1] . $value[2] . $value[2];
+		}
+
+		if ( 6 !== strlen( $value ) || ! ctype_xdigit( $value ) ) {
+			return $fallback;
+		}
+
+		return '#' . strtolower( $value );
 	}
 
 	public static function invalidatePassCache( int $ticket_id ): void {
@@ -291,9 +373,9 @@ final class Api {
 			'ticket_code'       => $ticket_code,
 			'first_name'        => $first_name,
 			'last_name'         => $last_name,
-			'icon_data'         => self::iconToBase64( (string) \get_attached_file( (int) ( $settings['icon_file_id'] ?? 0 ) ) ),
+			'icon_data'         => self::resolveIconData( (int) ( $settings['icon_file_id'] ?? 0 ) ),
 			'logo_text'         => (string) ( $settings['logo_text'] ?? '' ),
-			'background_color'  => (string) ( $settings['background_color'] ?? '' ),
+			'background_color'  => self::normalizeHexColor( (string) ( $settings['background_color'] ?? '' ) ),
 			'organisation_name' => (string) ( $settings['organisation_name'] ?? '' ),
 		);
 

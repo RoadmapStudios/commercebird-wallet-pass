@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "35e1e050345acbd8e868ccadbccd42b8",
+    "content-hash": "e08f881d7fea14c1276cd66b63823502",
     "packages": [
         {
             "name": "afragen/wp-dependency-installer",
