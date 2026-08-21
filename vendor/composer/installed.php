@@ -3,7 +3,7 @@
         'name' => 'commercebird/walletpass',
         'pretty_version' => 'dev-master',
         'version' => 'dev-master',
-        'reference' => 'd55057afc5b117f214f919f717a16a5f1321b802',
+        'reference' => 'fcceb78e25c0288ba5be217592cc76002706d99c',
         'type' => 'wordpress-plugin',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -31,7 +31,7 @@
         'commercebird/walletpass' => array(
             'pretty_version' => 'dev-master',
             'version' => 'dev-master',
-            'reference' => 'd55057afc5b117f214f919f717a16a5f1321b802',
+            'reference' => 'fcceb78e25c0288ba5be217592cc76002706d99c',
             'type' => 'wordpress-plugin',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -58,7 +58,7 @@
         'php-stubs/woocommerce-stubs' => array(
             'pretty_version' => 'dev-master',
             'version' => 'dev-master',
-            'reference' => '9d59e65dcabc18153c243cb9acd85fc88ef40589',
+            'reference' => 'fd69bd70e6a8d301a986529ce77f1283d04a0af0',
             'type' => 'library',
             'install_path' => __DIR__ . '/../php-stubs/woocommerce-stubs',
             'aliases' => array(
@@ -139,9 +139,9 @@
             'dev_requirement' => true,
         ),
         'symfony/polyfill-mbstring' => array(
-            'pretty_version' => 'v1.38.1',
-            'version' => '1.38.1.0',
-            'reference' => '14c5439eec4ccff081ac14eca2dc57feb2a66d92',
+            'pretty_version' => 'v1.38.2',
+            'version' => '1.38.2.0',
+            'reference' => 'd3d318bad5e7a1bfbd026009c8bfb8d8f99ae6b6',
             'type' => 'library',
             'install_path' => __DIR__ . '/../symfony/polyfill-mbstring',
             'aliases' => array(),

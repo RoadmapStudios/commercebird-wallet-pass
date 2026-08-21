@@ -5,7 +5,8 @@ jQuery(function ($) {
     var frame = wp.media({
       title: "Choose Image",
       button: { text: "Choose Image" },
-      library: { type: "image" },
+      // Apple only renders a PNG as the pass icon; anything else is discarded.
+      library: { type: "image/png" },
       multiple: false,
     });
 

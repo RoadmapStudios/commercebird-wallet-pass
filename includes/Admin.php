@@ -80,6 +80,8 @@ final class Admin {
 											<div id="icon_file_preview" style="margin-top:12px;<?php echo empty( $settings['icon_file'] ) ? 'display:none;' : ''; ?>">
 												<img id="icon_file_preview_image" src="<?php echo \esc_url( $settings['icon_file'] ); ?>" width="100" alt="" style="max-width:100px;height:auto;display:block;" />
 											</div>
+											<p class="description"><?php \esc_html_e( 'Use a square PNG of about 87x87 pixels. Apple ignores any other format, and the pass falls back to the default icon.', 'commercebird-wallet-pass' ); ?></p>
+											<?php self::renderIconFormatWarning( (int) $settings['icon_file_id'] ); ?>
 										</td>
 									</tr>
 									<tr>
@@ -198,6 +200,23 @@ final class Admin {
 			),
 			$settings
 		);
+	}
+
+	/**
+	 * Flags an icon Apple will refuse to render, so the fallback is not a surprise.
+	 *
+	 * @param int $attachment_id Media library ID of the configured icon.
+	 */
+	private static function renderIconFormatWarning( int $attachment_id ): void {
+		if ( $attachment_id <= 0 || 'image/png' === \get_post_mime_type( $attachment_id ) ) {
+			return;
+		}
+
+		?>
+		<div class="notice notice-warning inline" style="margin-top:12px;">
+			<p><?php \esc_html_e( 'The selected icon is not a PNG, so passes will use the default icon. Upload a PNG instead.', 'commercebird-wallet-pass' ); ?></p>
+		</div>
+		<?php
 	}
 
 	private static function renderApplicationPasswordWarning(): void {
