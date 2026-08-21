@@ -7,7 +7,7 @@
  * Requires PHP: 8.2
  * Requires Plugins: commercebird, tickera-event-ticketing-system
  * Requires at least: 7.0
- * Version: 1.0.4
+ * Version: 1.0.5
  * License: GNU General Public License v3.0
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  */
