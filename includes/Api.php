@@ -100,6 +100,13 @@ final class Api {
 	 * correct Content-Type for iOS Wallet via serveWalletPassProxy below; the
 	 * Google URL is an ordinary HTTPS save link and is not proxied.
 	 *
+	 * The cache check below tests the Apple URL alone: once a ticket has a
+	 * cached Apple pass, this method returns early and does not retry Google,
+	 * even if the Google URL is still blank. A merchant who configures Google
+	 * Wallet after tickets already exist must use the admin "invalidate all
+	 * pass caches" action (Admin::invalidateAllPassCaches()) to clear both
+	 * cached URLs and force regeneration on the next render.
+	 *
 	 * @param int $ticket_id Tickera ticket (tc_tickets_instances) post id.
 	 * @param int $order_id  WooCommerce order id, when known. Threaded through to
 	 *                       the API as groupingInfo.groupingId so every ticket in
@@ -159,8 +166,11 @@ final class Api {
 		if ( '' !== $urls['apple'] ) {
 			update_post_meta( $ticket_id, self::PASS_URL_META_KEY, $urls['apple'] );
 		}
-		// Only cache a Google URL that actually came back, so a transient
-		// Google failure retries on the next render instead of caching a blank.
+		// A Google URL is only cached when one actually comes back from the API. But
+		// the cache check above short-circuits on the Apple URL alone, so once this
+		// ticket's Apple pass is cached, this line is not reached again on later
+		// renders -- a still-blank Google URL is never retried once Apple is cached.
+		// See generateURLforWallet()'s docblock for how to force a retry.
 		if ( '' !== $urls['google'] ) {
 			update_post_meta( $ticket_id, self::GOOGLE_PASS_URL_META_KEY, $urls['google'] );
 		}
