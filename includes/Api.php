@@ -113,6 +113,11 @@ final class Api {
 		$location_obj = get_post_meta( (int) $event_id, '', false );
 		$ticket       = new \Tickera\TC_Ticket( $ticket_id );
 
+		// Tickera core exposes no meta key for a venue address or an event end
+		// time (confirmed in Task 9), so those are sent as ''; the Node API falls
+		// back venue_address -> venue_name and omits dateTime.end when empty. No
+		// confirmed meta key carries a WooCommerce order id on the ticket post
+		// either, so order_id is also left ''.
 		$pass_url = self::callWalletPassApi(
 			(string) ( $event_obj->details->post_title ?? '' ),
 			(string) ( $location_obj['event_location'][0] ?? '' ),
@@ -121,7 +126,13 @@ final class Api {
 			$ticket_id,
 			(string) $ticket_code,
 			(string) $first_name,
-			(string) $last_name
+			(string) $last_name,
+			(string) $event_id,
+			self::toIso8601( (string) ( $location_obj['event_date_time'][0] ?? '' ) ),
+			'',
+			(string) ( $location_obj['event_location'][0] ?? '' ),
+			'',
+			''
 		);
 
 		if ( ! empty( $pass_url ) ) {
@@ -325,6 +336,52 @@ final class Api {
 	}
 
 	/**
+	 * Public URL of the configured icon.
+	 *
+	 * Google Wallet fetches class images server-side and rejects base64, so the
+	 * URL is sent alongside the base64 Apple still needs.
+	 *
+	 * @param int $attachment_id Media library ID of the configured icon.
+	 * @return string Public URL, or '' when there is nothing usable.
+	 */
+	private static function resolveIconUrl( int $attachment_id ): string {
+		if ( $attachment_id <= 0 ) {
+			return '';
+		}
+
+		$url = \wp_get_attachment_url( $attachment_id );
+		if ( ! is_string( $url ) || '' === $url ) {
+			return '';
+		}
+
+		// Google fetches the image itself, so an http:// URL fails class insertion.
+		return str_starts_with( $url, 'https://' ) ? $url : '';
+	}
+
+	/**
+	 * Normalises an event date string to ISO 8601 in the site's timezone.
+	 *
+	 * The API omits the pass dateTime block for an empty string, so an
+	 * unparseable date degrades the pass instead of failing it.
+	 *
+	 * @param string $raw Raw value from the event post meta.
+	 * @return string ISO 8601 timestamp, or ''.
+	 */
+	private static function toIso8601( string $raw ): string {
+		$value = trim( $raw );
+		if ( '' === $value ) {
+			return '';
+		}
+
+		$timestamp = strtotime( $value );
+		if ( false === $timestamp ) {
+			return '';
+		}
+
+		return (string) \wp_date( 'c', $timestamp );
+	}
+
+	/**
 	 * Normalises a colour-picker value to #rrggbb.
 	 *
 	 * Anything the API cannot parse silently degrades the pass to the default
@@ -360,7 +417,13 @@ final class Api {
 		int $ticket_id,
 		string $ticket_code,
 		string $first_name,
-		string $last_name
+		string $last_name,
+		string $event_id = '',
+		string $event_start = '',
+		string $event_end = '',
+		string $venue_name = '',
+		string $venue_address = '',
+		string $order_id = ''
 	): ?string {
 		$settings = Admin::getSettings();
 
@@ -377,6 +440,15 @@ final class Api {
 			'logo_text'         => (string) ( $settings['logo_text'] ?? '' ),
 			'background_color'  => self::normalizeHexColor( (string) ( $settings['background_color'] ?? '' ) ),
 			'organisation_name' => (string) ( $settings['organisation_name'] ?? '' ),
+			// Google Wallet needs a fetchable image, a real timestamp and a split venue.
+			'icon_url'          => self::resolveIconUrl( (int) ( $settings['icon_file_id'] ?? 0 ) ),
+			'event_id'          => $event_id,
+			'event_start'       => $event_start,
+			'event_end'         => $event_end,
+			'venue_name'        => $venue_name,
+			'venue_address'     => $venue_address,
+			'homepage_uri'      => \home_url(),
+			'order_id'          => $order_id,
 		);
 
 		if ( ! class_exists( 'CommerceBird\\Admin\\Connectors\\Connector' ) ) {
