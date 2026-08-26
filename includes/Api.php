@@ -103,9 +103,10 @@ final class Api {
 	 * The cache check below tests the Apple URL alone: once a ticket has a
 	 * cached Apple pass, this method returns early and does not retry Google,
 	 * even if the Google URL is still blank. A merchant who configures Google
-	 * Wallet after tickets already exist must use the admin "invalidate all
-	 * pass caches" action (Admin::invalidateAllPassCaches()) to clear both
-	 * cached URLs and force regeneration on the next render.
+	 * Wallet after tickets already exist should re-save the Wallet settings
+	 * page in WP admin: saving invalidates every cached pass URL (it calls
+	 * Api::invalidatePassCache() for each ticket), so the next render
+	 * regenerates both URLs.
 	 *
 	 * @param int $ticket_id Tickera ticket (tc_tickets_instances) post id.
 	 * @param int $order_id  WooCommerce order id, when known. Threaded through to
