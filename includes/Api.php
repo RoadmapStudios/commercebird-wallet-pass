@@ -410,6 +410,14 @@ final class Api {
 	/**
 	 * Normalises an event date string to ISO 8601 in the site's timezone.
 	 *
+	 * WordPress forces PHP's default timezone to UTC, so strtotime() on
+	 * Tickera's local wall-clock event_date_time (e.g. "2026-09-01 20:00:00")
+	 * would produce the epoch for that time treated as UTC. Handing that
+	 * epoch to wp_date() then converts it into the site timezone, applying
+	 * the offset a second time (20:00 local becomes 22:00 on a UTC+2 site).
+	 * date_create_immutable() is given the site timezone directly so the raw
+	 * string is interpreted as local wall-clock time exactly once.
+	 *
 	 * The API omits the pass dateTime block for an empty string, so an
 	 * unparseable date degrades the pass instead of failing it.
 	 *
@@ -422,12 +430,8 @@ final class Api {
 			return '';
 		}
 
-		$timestamp = strtotime( $value );
-		if ( false === $timestamp ) {
-			return '';
-		}
-
-		return (string) \wp_date( 'c', $timestamp );
+		$dt = \date_create_immutable( $value, \wp_timezone() );
+		return $dt ? $dt->format( 'c' ) : '';
 	}
 
 	/**
@@ -547,20 +551,32 @@ final class Api {
 	/**
 	 * Renders the Apple and/or Google wallet badge(s) for a ticket.
 	 *
-	 * @param string|array{apple: string, google: string} $pass_url Pre-generated pair from the queue, or '' to pull the next queued entry.
+	 * Tickera normally passes the field_name string, not the meta value, to
+	 * callable-array callbacks -- in that case the next pre-generated pair is
+	 * consumed from the queue instead. But some Tickera versions and
+	 * third-party callers pass the already-resolved URL directly; a non-empty
+	 * string starting with "http" is treated as the Apple URL and rendered as
+	 * such rather than discarded.
+	 *
+	 * @param string|array{apple: string, google: string} $pass_url Pre-generated pair from the queue, a direct Apple URL, or '' to pull the next queued entry.
 	 */
 	public static function renderWalletButton( $pass_url = '' ): void {
-		// Tickera passes the field_name string, not the meta value, to callable-array callbacks.
-		// Consume the next pre-generated pair from the queue instead.
-		$urls = is_array( $pass_url ) ? $pass_url : array(
-			'apple'  => '',
-			'google' => '',
-		);
-		if ( '' === $urls['apple'] ) {
-			$urls = array_shift( self::$pass_url_queue ) ?? array(
+		if ( is_string( $pass_url ) && '' !== $pass_url && str_starts_with( $pass_url, 'http' ) ) {
+			$urls = array(
+				'apple'  => $pass_url,
+				'google' => '',
+			);
+		} else {
+			$urls = is_array( $pass_url ) ? $pass_url : array(
 				'apple'  => '',
 				'google' => '',
 			);
+			if ( '' === $urls['apple'] ) {
+				$urls = array_shift( self::$pass_url_queue ) ?? array(
+					'apple'  => '',
+					'google' => '',
+				);
+			}
 		}
 
 		if ( '' === $urls['apple'] && '' === $urls['google'] ) {
