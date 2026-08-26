@@ -5,7 +5,7 @@ Tags: woocommerce,apple,wallet,tickets,events
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.2
-Stable tag: 1.0.5
+Stable tag: 1.0.6
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 Automatically generate Apple Passes for Tickera via our Plug&Play CommerceBird Platform.
@@ -86,6 +86,10 @@ A: On the Thank You page after payment and in the email confirmation.
 2. Thankyou page to download the passes
 
 == Changelog ==
+= 1.0.6 - 26 August 2026 =
+* New: native Google Wallet passes alongside Apple Wallet passes
+* Tweak: Android users now get an official Google Wallet save link instead of a third-party walletpasses.io redirect
+
 = 1.0.5 - 21 August 2026 =
 * Fix: icon and background color in pass
 * Tested up to WordPress 7.1 and WooCommerce 11.x

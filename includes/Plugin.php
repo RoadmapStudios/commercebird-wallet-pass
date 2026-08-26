@@ -110,8 +110,8 @@ final class Plugin {
 				}
 			}
 
-			// Remove the cached meta so the next view regenerates if needed.
-			\delete_post_meta( (int) $ticket_id, Api::PASS_URL_META_KEY );
+			// Remove both cached URLs so the next view regenerates if needed.
+			Api::invalidatePassCache( (int) $ticket_id );
 		}
 	}
 
