@@ -86,7 +86,7 @@ A: On the Thank You page after payment and in the email confirmation.
 2. Thankyou page to download the passes
 
 == Changelog ==
-= 1.0.6 - 26 August 2026 =
+= 1.0.6 - 9 september 2026 =
 * New: native Google Wallet passes alongside Apple Wallet passes
 * Tweak: Android users now get an official Google Wallet save link instead of a third-party walletpasses.io redirect
 
