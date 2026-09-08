@@ -13,6 +13,8 @@ final class Plugin {
 	private const CRON_HOOK = 'cmbird_wallet_cleanup_expired_passes';
 
 	public static function bootstrap(): void {
+		\add_action( 'admin_notices', array( self::class, 'renderMissingTickeraNotice' ) );
+
 		Admin::register();
 		Api::register();
 
@@ -23,6 +25,31 @@ final class Plugin {
 
 		// Wire up the daily cleanup cron callback.
 		\add_action( self::CRON_HOOK, array( self::class, 'cleanupExpiredPasses' ) );
+	}
+
+	/**
+	 * Warns when Tickera is missing, since every hook, post type and meta key
+	 * this plugin builds on comes from it.
+	 *
+	 * Detected by class rather than by plugin slug so the free and premium
+	 * builds of Tickera both count as active. Both the namespaced and the
+	 * legacy global class name are accepted to cover either Tickera version.
+	 */
+	public static function renderMissingTickeraNotice(): void {
+		if ( \class_exists( 'Tickera\\TC' ) || \class_exists( 'TC' ) ) {
+			return;
+		}
+
+		if ( ! \current_user_can( 'activate_plugins' ) ) {
+			return;
+		}
+
+		?>
+		<div class="notice notice-error">
+			<p><strong><?php \esc_html_e( 'CommerceBird Wallet Pass requires Tickera.', 'commercebird-wallet-pass' ); ?></strong></p>
+			<p><?php \esc_html_e( 'Tickera does not appear to be active. Install and activate Tickera (free or premium) — until then no wallet passes are generated and the Wallet Pass settings screen stays hidden.', 'commercebird-wallet-pass' ); ?></p>
+		</div>
+		<?php
 	}
 
 	/**
