@@ -12,7 +12,7 @@ final class GeneratedConfig
 	public const EXTENSIONS = array (
   'szepeviktor/phpstan-wordpress' => 
   array (
-    'install_path' => 'C:\\Users\\FawadTiemoerieFreshM\\Documents\\GitHub\\commercebird-wallet-pass\\vendor/szepeviktor/phpstan-wordpress',
+    'install_path' => '/Users/fawadtiemoerie/Documents/GitHub/commercebird-wallet-pass/vendor/szepeviktor/phpstan-wordpress',
     'relative_install_path' => '../../../szepeviktor/phpstan-wordpress',
     'extra' => 
     array (

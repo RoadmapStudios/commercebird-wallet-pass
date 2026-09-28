@@ -41,3 +41,4 @@ build-mac.sh
 build-ubuntu.sh
 build-windows.sh
 README.md
+CLAUDE.md

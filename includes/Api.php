@@ -23,7 +23,7 @@ final class Api {
 	 * URL pairs are queued here by generatePassesForOrder / preloadPassUrlsForOrder before Tickera
 	 * renders the column, then consumed one-by-one by renderWalletButton.
 	 *
-	 * @var array<int, array{apple: string, google: string}>
+	 * @var array<int, array{apple: string, google: string, ticket_id?: int}>
 	 */
 	private static array $pass_url_queue = array();
 
@@ -35,6 +35,10 @@ final class Api {
 		add_action( 'woocommerce_account_view_order', array( self::class, 'preloadPassUrlsForOrder' ) );
 		add_action( 'woocommerce_email_after_order_table', array( self::class, 'addEmailWalletPass' ), 10, 4 );
 		// Proxy endpoint: fetches the .pkpass and re-serves it with the headers iOS Wallet requires.
+		// Served from the front end (home URL + query arg) because many server firewalls block
+		// /wp-admin/ for anonymous visitors.
+		add_action( 'parse_request', array( self::class, 'maybeServeWalletPassProxy' ) );
+		// Legacy admin-post.php endpoint, kept so links in already-sent order emails keep working.
 		add_action( 'admin_post_' . self::PROXY_ACTION, array( self::class, 'serveWalletPassProxy' ) );
 		add_action( 'admin_post_nopriv_' . self::PROXY_ACTION, array( self::class, 'serveWalletPassProxy' ) );
 	}
@@ -65,6 +69,7 @@ final class Api {
 		foreach ( (array) \Tickera\TC_Orders::get_tickets_ids( $order_id ) as $ticket_id ) {
 			$urls = self::generateURLforWallet( (int) $ticket_id, $order_id );
 			if ( '' !== $urls['apple'] ) {
+				$urls['ticket_id']      = (int) $ticket_id;
 				self::$pass_url_queue[] = $urls;
 			}
 		}
@@ -83,12 +88,13 @@ final class Api {
 			$apple = (string) get_post_meta( (int) $ticket_id, self::PASS_URL_META_KEY, true );
 			if ( '' !== $apple ) {
 				self::$pass_url_queue[] = array(
-					'apple'  => $apple,
-					'google' => (string) get_post_meta(
+					'apple'     => $apple,
+					'google'    => (string) get_post_meta(
 						(int) $ticket_id,
 						self::GOOGLE_PASS_URL_META_KEY,
 						true
 					),
+					'ticket_id' => (int) $ticket_id,
 				);
 			}
 		}
@@ -180,36 +186,111 @@ final class Api {
 	}
 
 	/**
-	 * Builds a signed WordPress proxy URL for a raw .pkpass URL.
+	 * Builds a signed front-end proxy URL for a .pkpass.
 	 * Routing through WordPress lets us set the full set of headers iOS Wallet requires.
+	 *
+	 * The link points at the home URL rather than /wp-admin/, which server firewalls
+	 * often block for anonymous visitors. When the ticket id is known, only the ticket
+	 * id is signed and the remote URL is looked up from post meta at download time,
+	 * so the remote URL never appears in the link.
+	 *
+	 * @param string $pass_url  Remote .pkpass URL, used only when no ticket id is known.
+	 * @param int    $ticket_id Tickera ticket (tc_tickets_instances) post id, or 0.
 	 */
-	private static function buildProxyUrl( string $pass_url ): string {
-		$signature = hash_hmac( 'sha256', $pass_url, wp_salt( 'auth' ) );
-		return add_query_arg(
-			array(
-				'action' => self::PROXY_ACTION,
-				'pass'   => rawurlencode( $pass_url ),
-				'sig'    => $signature,
-			),
-			admin_url( 'admin-post.php' )
-		);
+	private static function buildProxyUrl( string $pass_url, int $ticket_id = 0 ): string {
+		if ( $ticket_id > 0 ) {
+			$args = array(
+				self::PROXY_ACTION => '1',
+				'ticket'           => $ticket_id,
+				'sig'              => self::signTicket( $ticket_id ),
+			);
+		} else {
+			$args = array(
+				self::PROXY_ACTION => '1',
+				'pass'             => rawurlencode( $pass_url ),
+				'sig'              => self::signPassUrl( $pass_url ),
+			);
+		}
+
+		return add_query_arg( $args, home_url( '/' ) );
+	}
+
+	/**
+	 * Signs a ticket id for use in a front-end proxy link.
+	 *
+	 * @param int $ticket_id Tickera ticket post id.
+	 */
+	private static function signTicket( int $ticket_id ): string {
+		// Prefixed so a ticket signature can never double as a pass-URL signature.
+		return hash_hmac( 'sha256', 'ticket:' . $ticket_id, wp_salt( 'auth' ) );
+	}
+
+	/**
+	 * Signs a remote .pkpass URL for use in a proxy link.
+	 *
+	 * @param string $pass_url Remote .pkpass URL.
+	 */
+	private static function signPassUrl( string $pass_url ): string {
+		return hash_hmac( 'sha256', $pass_url, wp_salt( 'auth' ) );
+	}
+
+	/**
+	 * Front-end entry point for the proxy, hooked to parse_request so it runs
+	 * before the main query and the theme are loaded.
+	 */
+	public static function maybeServeWalletPassProxy(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public download link; authenticity is checked via the HMAC signature.
+		if ( ! isset( $_GET[ self::PROXY_ACTION ] ) ) {
+			return;
+		}
+
+		// Ask page-cache plugins (WP Rocket, W3TC, LiteSpeed, ...) not to cache this response.
+		if ( ! defined( 'DONOTCACHEPAGE' ) ) {
+			define( 'DONOTCACHEPAGE', true );
+		}
+
+		self::serveWalletPassProxy();
 	}
 
 	/**
 	 * Fetches the .pkpass from the remote URL and re-serves it with the headers
-	 * iOS Wallet requires. Accessible to unauthenticated users via admin_post_nopriv_.
+	 * iOS Wallet requires. Accepts either a signed ticket id (current links) or a
+	 * signed remote URL (older admin-post.php links in sent emails, and direct URLs).
 	 */
 	public static function serveWalletPassProxy(): void {
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Admin page detection.
-		$encoded_pass = isset( $_GET['pass'] ) ? (string) wp_unslash( $_GET['pass'] ) : '';
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Admin page detection.
-		$signature    = isset( $_GET['sig'] ) ? (string) wp_unslash( $_GET['sig'] ) : '';
-		$pass_url     = esc_url_raw( rawurldecode( $encoded_pass ) );
-		$expected_sig = hash_hmac( 'sha256', $pass_url, wp_salt( 'auth' ) );
+		nocache_headers();
 
-		if ( '' === $pass_url || '' === $signature || ! hash_equals( $expected_sig, $signature ) ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Public download link; authenticity is checked via the HMAC signature.
+		$signature = isset( $_GET['sig'] ) ? (string) wp_unslash( $_GET['sig'] ) : '';
+		if ( '' === $signature ) {
 			status_header( 403 );
 			exit;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public download link; authenticity is checked via the HMAC signature.
+		if ( isset( $_GET['ticket'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Cast to int by absint().
+			$ticket_id = absint( $_GET['ticket'] );
+			if ( 0 === $ticket_id || ! hash_equals( self::signTicket( $ticket_id ), $signature ) ) {
+				status_header( 403 );
+				exit;
+			}
+
+			// Empty once the ticket expired and the cleanup cron removed its pass.
+			$pass_url = (string) get_post_meta( $ticket_id, self::PASS_URL_META_KEY, true );
+			if ( '' === $pass_url ) {
+				status_header( 404 );
+				exit;
+			}
+		} else {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Validated via the HMAC signature below.
+			$encoded_pass = isset( $_GET['pass'] ) ? (string) wp_unslash( $_GET['pass'] ) : '';
+			$pass_url     = esc_url_raw( rawurldecode( $encoded_pass ) );
+
+			if ( '' === $pass_url || ! hash_equals( self::signPassUrl( $pass_url ), $signature ) ) {
+				status_header( 403 );
+				exit;
+			}
 		}
 
 		$response = wp_remote_get(
@@ -279,9 +360,10 @@ final class Api {
 			}
 			$ticket_type_id = isset( $ticket_meta['ticket_type_id'] ) ? reset( $ticket_meta['ticket_type_id'] ) : '';
 			$passes[]       = array(
-				'title'  => get_the_title( $ticket_type_id ),
-				'apple'  => $urls['apple'],
-				'google' => $urls['google'],
+				'title'     => get_the_title( $ticket_type_id ),
+				'apple'     => $urls['apple'],
+				'google'    => $urls['google'],
+				'ticket_id' => (int) $order_attendee_id,
 			);
 		}
 
@@ -309,7 +391,7 @@ final class Api {
 			echo '<p>';
 			echo '<strong>' . esc_html( $pass['title'] ) . '</strong><br>';
 			if ( '' !== $pass['apple'] ) {
-				self::renderAppleBadge( $pass['apple'] );
+				self::renderAppleBadge( $pass['apple'], $pass['ticket_id'] );
 			}
 			if ( '' !== $pass['google'] ) {
 				self::renderGoogleBadge( $pass['google'] );
@@ -558,7 +640,7 @@ final class Api {
 	 * string starting with "http" is treated as the Apple URL and rendered as
 	 * such rather than discarded.
 	 *
-	 * @param string|array{apple: string, google: string} $pass_url Pre-generated pair from the queue, a direct Apple URL, or '' to pull the next queued entry.
+	 * @param string|array{apple: string, google: string, ticket_id?: int} $pass_url Pre-generated pair from the queue, a direct Apple URL, or '' to pull the next queued entry.
 	 */
 	public static function renderWalletButton( $pass_url = '' ): void {
 		if ( is_string( $pass_url ) && '' !== $pass_url && str_starts_with( $pass_url, 'http' ) ) {
@@ -593,13 +675,13 @@ final class Api {
 		}
 
 		if ( '' !== $urls['apple'] ) {
-			self::renderAppleBadge( $urls['apple'] );
+			self::renderAppleBadge( $urls['apple'], (int) ( $urls['ticket_id'] ?? 0 ) );
 		}
 	}
 
-	private static function renderAppleBadge( string $apple_url ): void {
+	private static function renderAppleBadge( string $apple_url, int $ticket_id = 0 ): void {
 		$badge = plugins_url( 'includes/add-to-apple-wallet.png', dirname( __DIR__ ) . '/tickera-wallet-pass.php' );
-		echo '<a href="' . esc_url( self::buildProxyUrl( $apple_url ) ) . '" rel="noopener noreferrer">'
+		echo '<a href="' . esc_url( self::buildProxyUrl( $apple_url, $ticket_id ) ) . '" rel="noopener noreferrer">'
 			. '<img src="' . esc_url( $badge ) . '" width="100" alt="' . esc_attr__( 'Add to Apple Wallet', 'commercebird-wallet-pass' ) . '" />'
 			. '</a>';
 	}
