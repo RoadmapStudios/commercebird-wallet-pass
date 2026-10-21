@@ -7,7 +7,7 @@
  * Requires PHP: 8.2
  * Requires Plugins: commercebird
  * Requires at least: 7.0
- * Version: 1.0.6
+ * Version: 1.1.0
  * License: GNU General Public License v3.0
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  */
