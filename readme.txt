@@ -5,7 +5,7 @@ Tags: woocommerce,apple,wallet,tickets,events
 Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.2
-Stable tag: 1.0.6
+Stable tag: 1.1.0
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 Automatically generate Apple Passes for Tickera via our Plug&Play CommerceBird Platform.
@@ -86,7 +86,7 @@ A: On the Thank You page after payment and in the email confirmation.
 2. Thankyou page to download the passes
 
 == Changelog ==
-= 1.1.0 - 21 October 2026 =
+= 1.1.0 - 26 October 2026 =
 * Tweak: passes will be generated on click via api instead of AJAX via the thankyou hook
 * Fix: improved security
 
