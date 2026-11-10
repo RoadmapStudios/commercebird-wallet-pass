@@ -13,10 +13,19 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 final class Api {
 
-	private const CONNECTOR_ENDPOINT       = 'customs/wallet/pass';
-	private const PROXY_ACTION             = 'commercebird_wallet_pass';
-	public const  PASS_URL_META_KEY        = '_tc_wallet_pass_url';
-	public const  GOOGLE_PASS_URL_META_KEY = '_tc_wallet_google_pass_url';
+	private const CONNECTOR_ENDPOINT          = 'customs/wallet/pass';
+	private const PROXY_ACTION                = 'commercebird_wallet_pass';
+	public const  PASS_URL_META_KEY           = '_tc_wallet_pass_url';
+	public const  GOOGLE_PASS_URL_META_KEY    = '_tc_wallet_google_pass_url';
+	public const  GOOGLE_UNAVAILABLE_META_KEY = '_tc_wallet_google_unavailable';
+
+	/**
+	 * Response code the API sends for a Google request when Google Wallet is not
+	 * configured on its side. The ticket is then flagged with
+	 * GOOGLE_UNAVAILABLE_META_KEY so the Google badge stops being offered.
+	 * The flag is cleared with the pass cache.
+	 */
+	private const API_CODE_NOT_CONFIGURED = 501;
 
 	/**
 	 * Tickera passes the field_name string to callable-array callbacks, not the post-meta value.
@@ -88,20 +97,32 @@ final class Api {
 	}
 
 	/**
-	 * Returns the pass URLs for a ticket, calling the CommerceBird API on the
-	 * first click and serving the cached URLs after that. Ends the request with
-	 * a message when no pass can be produced.
+	 * Post-meta key that caches a ticket's pass URL for one wallet.
 	 *
-	 * @param int $ticket_id Tickera ticket (tc_tickets_instances) post id.
-	 * @return array{apple: string, google: string}
+	 * @param string $wallet 'apple' or 'google'.
 	 */
-	private static function getPassUrlsForTicket( int $ticket_id ): array {
-		$cached = array(
-			'apple'  => (string) get_post_meta( $ticket_id, self::PASS_URL_META_KEY, true ),
-			'google' => (string) get_post_meta( $ticket_id, self::GOOGLE_PASS_URL_META_KEY, true ),
-		);
-		if ( '' !== $cached['apple'] ) {
+	private static function urlMetaKey( string $wallet ): string {
+		return 'google' === $wallet ? self::GOOGLE_PASS_URL_META_KEY : self::PASS_URL_META_KEY;
+	}
+
+	/**
+	 * Returns one wallet's pass URL for a ticket, calling the CommerceBird API
+	 * on the first click of that wallet's badge and serving the cached URL after
+	 * that. Apple and Google are generated independently: clicking one badge
+	 * never creates the other pass. Ends the request with a message when no
+	 * pass can be produced.
+	 *
+	 * @param int    $ticket_id Tickera ticket (tc_tickets_instances) post id.
+	 * @param string $wallet    'apple' or 'google'.
+	 */
+	private static function getPassUrlForTicket( int $ticket_id, string $wallet ): string {
+		$cached = (string) get_post_meta( $ticket_id, self::urlMetaKey( $wallet ), true );
+		if ( '' !== $cached ) {
 			return $cached;
+		}
+
+		if ( 'google' === $wallet && ! self::mayHaveGooglePass( $ticket_id ) ) {
+			self::dieWithMessage( 404, __( 'A Google Wallet pass is not available for this ticket.', 'commercebird-wallet-pass' ) );
 		}
 
 		// Tickera stores a ticket instance under its WooCommerce order.
@@ -110,55 +131,54 @@ final class Api {
 			self::dieWithMessage( 409, __( 'Your payment has not been confirmed yet. Please try again in a few minutes.', 'commercebird-wallet-pass' ) );
 		}
 
-		$urls = self::generateURLforWallet( $ticket_id, $order_id );
-		if ( '' === $urls['apple'] && '' === $urls['google'] ) {
+		$url = self::generateURLforWallet( $ticket_id, $order_id, $wallet );
+		if ( '' === $url ) {
+			if ( 'google' === $wallet && ! self::mayHaveGooglePass( $ticket_id ) ) {
+				self::dieWithMessage( 404, __( 'A Google Wallet pass is not available for this ticket.', 'commercebird-wallet-pass' ) );
+			}
 			self::dieWithMessage( 502, __( 'The wallet pass could not be created. Please try again later.', 'commercebird-wallet-pass' ) );
 		}
 
-		return $urls;
+		return $url;
 	}
 
 	/**
-	 * Whether a Google Wallet badge should be offered for a ticket. Before the
-	 * first click it is unknown whether the API returns a Google pass, so the
-	 * badge is shown; once generated, it is shown only if a Google URL came back.
+	 * Whether a Google Wallet badge should be offered for a ticket. It is shown
+	 * unless an earlier Google click was answered with "Google Wallet is not
+	 * configured". Other failures leave the badge in place so the next click
+	 * retries.
 	 *
 	 * @param int $ticket_id Tickera ticket post id.
 	 */
 	private static function mayHaveGooglePass( int $ticket_id ): bool {
-		return '' === (string) get_post_meta( $ticket_id, self::PASS_URL_META_KEY, true )
-			|| '' !== (string) get_post_meta( $ticket_id, self::GOOGLE_PASS_URL_META_KEY, true );
+		return '' === (string) get_post_meta( $ticket_id, self::GOOGLE_UNAVAILABLE_META_KEY, true );
 	}
 
 	/**
-	 * Generates the wallet pass via the CommerceBird API, caches the resulting
-	 * URLs in post-meta, and returns them. Only reached from the proxy, when a
-	 * customer clicks a wallet badge. The Apple URL is re-served with the
+	 * Generates one wallet's pass via the CommerceBird API, caches its URL in
+	 * post-meta, and returns it. Only reached from the proxy, when a customer
+	 * clicks that wallet's badge. The Apple URL is re-served with the
 	 * Content-Type iOS Wallet requires; the Google URL is redirected to.
 	 *
-	 * The cache check below tests the Apple URL alone: once a ticket has a
-	 * cached Apple pass, this method returns early and does not retry Google,
-	 * even if the Google URL is still blank. A merchant who configures Google
-	 * Wallet after tickets already exist should re-save the Wallet settings
-	 * page in WP admin: saving invalidates every cached pass URL (it calls
-	 * Api::invalidatePassCache() for each ticket), so the next click
-	 * regenerates both URLs.
+	 * Each wallet is cached under its own key, so a missing Google URL is
+	 * retried on the next Google click regardless of the Apple cache. When the
+	 * API answers that Google Wallet is not configured, the ticket is flagged
+	 * so the Google badge is no longer offered; re-saving the Wallet settings
+	 * page clears that flag along with every cached URL.
 	 *
-	 * @param int $ticket_id Tickera ticket (tc_tickets_instances) post id.
-	 * @param int $order_id  WooCommerce order id, when known. Threaded through to
-	 *                       the API as groupingInfo.groupingId so every ticket in
-	 *                       the same order stacks together in Google Wallet. 0 when
-	 *                       the caller has no order context; sent to the API as ''.
-	 * @return array{apple: string, google: string}
+	 * @param int    $ticket_id Tickera ticket (tc_tickets_instances) post id.
+	 * @param int    $order_id  WooCommerce order id, when known. Threaded through to
+	 *                          the API as groupingInfo.groupingId so every ticket in
+	 *                          the same order stacks together in Google Wallet. 0 when
+	 *                          the caller has no order context; sent to the API as ''.
+	 * @param string $wallet    'apple' or 'google'.
+	 * @return string The pass URL, or '' when none could be produced.
 	 */
-	private static function generateURLforWallet( int $ticket_id, int $order_id = 0 ): array {
-		$cached_apple  = (string) get_post_meta( $ticket_id, self::PASS_URL_META_KEY, true );
-		$cached_google = (string) get_post_meta( $ticket_id, self::GOOGLE_PASS_URL_META_KEY, true );
-		if ( '' !== $cached_apple ) {
-			return array(
-				'apple'  => $cached_apple,
-				'google' => $cached_google,
-			);
+	private static function generateURLforWallet( int $ticket_id, int $order_id, string $wallet ): string {
+		$meta_key = self::urlMetaKey( $wallet );
+		$cached   = (string) get_post_meta( $ticket_id, $meta_key, true );
+		if ( '' !== $cached ) {
+			return $cached;
 		}
 
 		$ticket_meta = get_post_meta( $ticket_id, '', false );
@@ -170,10 +190,7 @@ final class Api {
 		if ( empty( $event_id ) || empty( $ticket_code )
 			|| ! class_exists( 'Tickera\TC_Event' )
 			|| ! class_exists( 'Tickera\TC_Ticket' ) ) {
-			return array(
-				'apple'  => '',
-				'google' => '',
-			);
+			return '';
 		}
 
 		$event_obj    = new \Tickera\TC_Event( (int) $event_id );
@@ -183,7 +200,8 @@ final class Api {
 		// Tickera core exposes no meta key for a venue address or an event end
 		// time (confirmed in Task 9), so those are sent as ''; the Node API falls
 		// back venue_address -> venue_name and omits dateTime.end when empty.
-		$urls = self::callWalletPassApi(
+		$result = self::callWalletPassApi(
+			$wallet,
 			(string) ( $event_obj->details->post_title ?? '' ),
 			(string) ( $location_obj['event_location'][0] ?? '' ),
 			(string) ( $location_obj['event_date_time'][0] ?? '' ),
@@ -200,19 +218,17 @@ final class Api {
 			$order_id > 0 ? (string) $order_id : ''
 		);
 
-		if ( '' !== $urls['apple'] ) {
-			update_post_meta( $ticket_id, self::PASS_URL_META_KEY, $urls['apple'] );
-		}
-		// A Google URL is only cached when one actually comes back from the API. But
-		// the cache check above short-circuits on the Apple URL alone, so once this
-		// ticket's Apple pass is cached, this line is not reached again on later
-		// clicks -- a still-blank Google URL is never retried once Apple is cached.
-		// See generateURLforWallet()'s docblock for how to force a retry.
-		if ( '' !== $urls['google'] ) {
-			update_post_meta( $ticket_id, self::GOOGLE_PASS_URL_META_KEY, $urls['google'] );
+		if ( 'google' === $wallet && self::API_CODE_NOT_CONFIGURED === $result['code'] ) {
+			update_post_meta( $ticket_id, self::GOOGLE_UNAVAILABLE_META_KEY, '1' );
+			return '';
 		}
 
-		return $urls;
+		$url = $result[ $wallet ];
+		if ( '' !== $url ) {
+			update_post_meta( $ticket_id, $meta_key, $url );
+		}
+
+		return $url;
 	}
 
 	/**
@@ -294,7 +310,9 @@ final class Api {
 	 * iOS Wallet requires. Accepts either a signed ticket id (current links) or a
 	 * signed remote URL (older admin-post.php links in sent emails, and direct URLs).
 	 *
-	 * For a ticket id, the first click is what generates the pass via the API.
+	 * For a ticket id, the first click of a badge is what generates that badge's
+	 * pass via the API: an Apple click creates only the Apple pass, a Google
+	 * click only the Google pass.
 	 *
 	 * Android cannot open a .pkpass (the browser shows a blank page), so Android
 	 * visitors and 'google' links are redirected to the Google Wallet save link.
@@ -319,22 +337,13 @@ final class Api {
 				self::dieWithMessage( 403, __( 'This wallet pass link is invalid.', 'commercebird-wallet-pass' ) );
 			}
 
-			$urls = self::getPassUrlsForTicket( $ticket_id );
-
 			if ( $wants_google || self::isAndroid() ) {
-				if ( '' === $urls['google'] ) {
-					self::dieWithMessage( 404, __( 'A Google Wallet pass is not available for this ticket.', 'commercebird-wallet-pass' ) );
-				}
 				// phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- Google Wallet save link returned by the CommerceBird API; the ticket id is HMAC-signed.
-				wp_redirect( $urls['google'] );
+				wp_redirect( self::getPassUrlForTicket( $ticket_id, 'google' ) );
 				exit;
 			}
 
-			// Empty when the API returned only a Google pass.
-			$pass_url = $urls['apple'];
-			if ( '' === $pass_url ) {
-				self::dieWithMessage( 404, __( 'An Apple Wallet pass is not available for this ticket.', 'commercebird-wallet-pass' ) );
-			}
+			$pass_url = self::getPassUrlForTicket( $ticket_id, 'apple' );
 		} else {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Validated via the HMAC signature below.
 			$encoded_pass = isset( $_GET['pass'] ) ? (string) wp_unslash( $_GET['pass'] ) : '';
@@ -620,9 +629,51 @@ final class Api {
 	public static function invalidatePassCache( int $ticket_id ): void {
 		delete_post_meta( $ticket_id, self::PASS_URL_META_KEY );
 		delete_post_meta( $ticket_id, self::GOOGLE_PASS_URL_META_KEY );
+		delete_post_meta( $ticket_id, self::GOOGLE_UNAVAILABLE_META_KEY );
 	}
 
+	/**
+	 * A meta_query matching every ticket that holds any cached pass state.
+	 * Apple and Google are generated separately, so a ticket can have a Google
+	 * URL without an Apple one.
+	 *
+	 * @return array<int|string, mixed>
+	 */
+	public static function cachedPassMetaQuery(): array {
+		$query = array( 'relation' => 'OR' );
+		foreach ( array( self::PASS_URL_META_KEY, self::GOOGLE_PASS_URL_META_KEY, self::GOOGLE_UNAVAILABLE_META_KEY ) as $key ) {
+			$query[] = array(
+				'key'     => $key,
+				'compare' => 'EXISTS',
+			);
+		}
+		return $query;
+	}
+
+	/**
+	 * Asks the CommerceBird API for one wallet's pass.
+	 *
+	 * @param string $wallet        'apple' or 'google'. Sent as `wallet` so the API
+	 *                              creates only that pass.
+	 * @param string $event_title   Event name.
+	 * @param string $location      Event location as stored by Tickera.
+	 * @param string $datetime      Raw event date/time as stored by Tickera.
+	 * @param string $ticket_title  Ticket type name.
+	 * @param int    $ticket_id     Tickera ticket post id.
+	 * @param string $ticket_code   Ticket code encoded in the barcode.
+	 * @param string $first_name    Attendee first name.
+	 * @param string $last_name     Attendee last name.
+	 * @param string $event_id      Tickera event post id.
+	 * @param string $event_start   Event start as ISO 8601, or ''.
+	 * @param string $event_end     Event end as ISO 8601, or ''.
+	 * @param string $venue_name    Venue name.
+	 * @param string $venue_address Venue address, or ''.
+	 * @param string $order_id      WooCommerce order id, or ''.
+	 * @return array{apple: string, google: string, code: int} code is the API's
+	 *               response code, or 0 when no response was received.
+	 */
 	private static function callWalletPassApi(
+		string $wallet,
 		string $event_title,
 		string $location,
 		string $datetime,
@@ -641,6 +692,7 @@ final class Api {
 		$settings = Admin::getSettings();
 
 		$payload = array(
+			'wallet'            => $wallet,
 			'event_title'       => $event_title,
 			'location'          => $location,
 			'datetime'          => $datetime,
@@ -664,14 +716,17 @@ final class Api {
 			'order_id'          => $order_id,
 		);
 
+		$failed = array(
+			'apple'  => '',
+			'google' => '',
+			'code'   => 0,
+		);
+
 		if ( ! class_exists( 'CommerceBird\\Admin\\Connectors\\Connector' ) ) {
 			if ( class_exists( 'WC_Logger' ) ) {
 				wc_get_logger()->error( 'Connector class not found. Ensure the CommerceBird plugin is active.', array( 'source' => 'tickera-wallet-pass' ) );
 			}
-			return array(
-				'apple'  => '',
-				'google' => '',
-			);
+			return $failed;
 		}
 
 		$connector = new \CommerceBird\Admin\Connectors\Connector();
@@ -679,22 +734,19 @@ final class Api {
 
 		if ( is_wp_error( $response ) ) {
 			if ( class_exists( 'WC_Logger' ) ) {
-				wc_get_logger()->error( 'Wallet Pass API request failed: ' . $response->get_error_message(), array( 'source' => 'tickera-wallet-pass' ) );
+				wc_get_logger()->error( 'Wallet Pass API request failed (' . $wallet . '): ' . $response->get_error_message(), array( 'source' => 'tickera-wallet-pass' ) );
 			}
-			return array(
-				'apple'  => '',
-				'google' => '',
-			);
+			return $failed;
 		}
 
-		if ( ! is_array( $response ) || ( $response['code'] ?? null ) !== 200 ) {
+		$code = is_array( $response ) ? (int) ( $response['code'] ?? 0 ) : 0;
+		if ( 200 !== $code ) {
 			if ( class_exists( 'WC_Logger' ) ) {
-				wc_get_logger()->error( 'Wallet Pass API error: ' . ( $response['message'] ?? 'unexpected response' ), array( 'source' => 'tickera-wallet-pass' ) );
+				$message = is_array( $response ) ? ( $response['message'] ?? 'unexpected response' ) : 'unexpected response';
+				wc_get_logger()->error( 'Wallet Pass API error (' . $wallet . '): ' . $message, array( 'source' => 'tickera-wallet-pass' ) );
 			}
-			return array(
-				'apple'  => '',
-				'google' => '',
-			);
+			$failed['code'] = $code;
+			return $failed;
 		}
 
 		$data       = $response['data'] ?? array();
@@ -704,6 +756,7 @@ final class Api {
 		return array(
 			'apple'  => is_string( $pass_url ) ? \esc_url_raw( $pass_url ) : '',
 			'google' => is_string( $google_url ) ? \esc_url_raw( $google_url ) : '',
+			'code'   => $code,
 		);
 	}
 
