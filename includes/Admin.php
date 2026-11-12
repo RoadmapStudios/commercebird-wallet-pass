@@ -266,12 +266,7 @@ final class Admin {
 				'post_type'      => 'tc_tickets_instances',
 				'posts_per_page' => -1,
 				'fields'         => 'ids',
-				'meta_query'     => array(
-					array(
-						'key'     => Api::PASS_URL_META_KEY,
-						'compare' => 'EXISTS',
-					),
-				),
+				'meta_query'     => Api::cachedPassMetaQuery(),
 			)
 		);
 

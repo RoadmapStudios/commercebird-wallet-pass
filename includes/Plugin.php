@@ -77,18 +77,13 @@ final class Plugin {
 	 *   - tickets whose event post has been trashed or does not exist.
 	 */
 	public static function cleanupExpiredPasses(): void {
-		// Fetch all ticket posts that have a cached pass URL.
+		// Fetch all ticket posts that have any cached pass state (Apple or Google).
 		$ticket_ids = \get_posts(
 			array(
 				'post_type'      => 'tc_tickets_instances',
 				'posts_per_page' => -1,
 				'fields'         => 'ids',
-				'meta_query'     => array(
-					array(
-						'key'     => Api::PASS_URL_META_KEY,
-						'compare' => 'EXISTS',
-					),
-				),
+				'meta_query'     => Api::cachedPassMetaQuery(),
 			)
 		);
 
